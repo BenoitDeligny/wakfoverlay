@@ -1,0 +1,42 @@
+{
+  "name": "wakfoverlay",
+  "version": "0.1.0",
+  "description": "An overlay for Wakfu to display information from logs.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "lint": "eslint . --ext .ts,.js",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "Electron",
+    "Wakfu",
+    "Overlay"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^35.1.5",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9.24.0"
+  },
+  "build": {
+    "appId": "com.example.wakfoverlay",
+    "productName": "WakfOverlay",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

@@ -1,0 +1,74 @@
+body {
+  background-color: transparent;
+  color: white; 
+  font-family: sans-serif;
+}
+
+#title-bar {
+  -webkit-app-region: drag;
+  padding: 20px 20px 10px 20px;
+  background-color: rgba(114, 114, 114, 0.500);
+}
+
+#content-area {
+  -webkit-app-region: no-drag;
+  padding: 10px 20px 20px 20px;
+}
+
+.separator {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.3);
+  margin: 0 20px;
+  -webkit-app-region: no-drag;
+}
+
+h1 {
+  font-size: 1.5em;
+  margin: 0;
+  padding: 0;
+}
+
+#close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+#close-btn::before,
+#close-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: white;
+}
+
+#close-btn::before {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+#close-btn::after {
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+#select-file-btn {
+  -webkit-app-region: no-drag;
+}
+
+#logContent {
+  background-color: rgba(0, 0, 0);
+  color: #7907d6;
+  max-height: 200px; 
+  overflow-y: auto; 
+  padding: 10px;
+  margin-top: 10px; 
+  border-radius: 4px;
+  white-space: pre-wrap; 
+  word-break: break-all; 
+} 
