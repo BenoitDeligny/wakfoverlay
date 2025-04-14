@@ -21,7 +21,6 @@ if (selectFileBtn) {
   selectFileBtn.addEventListener('click', async () => {
     selectedFilePath = await window.electronAPI.selectFile();
     if (selectedFilePath) {
-      console.log('Selected file path:', selectedFilePath);
       startPolling();
     }
   });
@@ -72,10 +71,8 @@ async function fetchLogContent() {
   if (!selectedFilePath) return;
   try {
     const fightData = await window.electronAPI.getFightIds(selectedFilePath);
-    console.log('Received fight data:', fightData);
     updateFightDisplays(fightData);
   } catch (error) {
-    console.error('Error fetching log content or fight data:', error);
     if (currentFightIdElement) currentFightIdElement.textContent = 'Error';
     if (lastFightIdElement) lastFightIdElement.textContent = 'Error';
     if (currentFightTotalDamageElement) currentFightTotalDamageElement.textContent = 'Error';
@@ -91,7 +88,6 @@ async function fetchLogContent() {
 }
 
 window.electronAPI.onLoadFile((filePath) => {
-  console.log('Received file path to auto-load:', filePath);
   if (filePath) {
     selectedFilePath = filePath;
     startPolling();
@@ -109,4 +105,3 @@ function updateLogScreen(logData) {
 window.electronAPI.onUpdateLog((_event, logData) => {
   updateLogScreen(logData);
 });
-

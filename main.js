@@ -17,7 +17,6 @@ async function analyzeLogFile(filePath) {
   try {
     await fs.access(filePath);
   } catch (error) {
-    console.error(`Log file not accessible at: ${filePath}`, error);
     return { lastCompletedFightId: null, lastCompletedFightTotalDamage: 0, lastCompletedFightFighters: [], currentFightId: null, currentFightStartTime: null, currentFightTotalDamage: 0, currentFightFighters: [] };
   }
 
@@ -42,7 +41,6 @@ async function analyzeLogFile(filePath) {
 
       if (startMatch) {
         if (activeFight) {
-          console.warn(`WARN: Found new fight start at line ${lineNumber} while processing fight ID ${activeFight.id}. Previous fight marked incomplete.`);
           if (activeFight.id) {
               currentFight.id = activeFight.id;
               currentFight.startTime = activeFight.startTime;
@@ -79,11 +77,7 @@ async function analyzeLogFile(filePath) {
                       activeFight.fighters.push({ name: fighterName, fighterId: fighterId, isAI: isAI });
                       currentFight.fighters = [...activeFight.fighters];
                   }
-              } else {
-                  console.warn(`WARN: Fighter join line ${lineNumber} has ID ${joinFightId} which does not match active fight ID ${activeFight.id}.`);
               }
-          } else {
-              console.warn(`WARN: Fighter join line ${lineNumber} found outside of an active fight context.`);
           }
 
       } else if (damageMatch && activeFight) {
@@ -94,8 +88,6 @@ async function analyzeLogFile(filePath) {
               if (currentFight.id === activeFight.id) {
                   currentFight.totalDamage = activeFight.totalDamage;
               }
-          } else {
-              console.warn(`WARN: Failed to parse damage amount from string "${damageMatch[2]}" at line ${lineNumber}`);
           }
 
       } else if (endMatch) {
@@ -110,21 +102,18 @@ async function analyzeLogFile(filePath) {
           activeFight = null;
           currentFight = { id: null, startTime: null, totalDamage: 0, fighters: [] };
         } else if (activeFight && activeFight.id !== endedFightId) {
-          console.warn(`WARN: Fight ID mismatch at end line ${lineNumber}. Active fight ID ${activeFight.id}, ended ID ${endedFightId}. Ending active fight.`);
           endedFightDamage = activeFight.totalDamage;
           endedFightFighters = [...activeFight.fighters];
           lastCompletedFight = { id: endedFightId, totalDamage: endedFightDamage, fighters: endedFightFighters };
           activeFight = null;
           currentFight = { id: null, startTime: null, totalDamage: 0, fighters: [] };
         } else {
-          console.warn(`WARN: Found fight end at line ${lineNumber} (ID: ${endedFightId}) without a tracked start. Damage/fighters cannot be associated.`);
           lastCompletedFight = { id: endedFightId, totalDamage: 0, fighters: [] };
         }
       }
     });
 
     rl.on('close', () => {
-      console.log(`Analysis complete: Last=${lastCompletedFight.id} (Dmg: ${lastCompletedFight.totalDamage}, Fighters: ${lastCompletedFight.fighters.length}), Current=${currentFight.id} (Dmg: ${currentFight.totalDamage}, Fighters: ${currentFight.fighters.length})`);
       resolve({
           lastCompletedFightId: lastCompletedFight.id,
           lastCompletedFightTotalDamage: lastCompletedFight.totalDamage,
@@ -137,12 +126,10 @@ async function analyzeLogFile(filePath) {
     });
 
     rl.on('error', (err) => {
-      console.error(`Error reading log file stream: ${filePath}`, err);
       reject(err);
     });
 
     fileStream.on('error', (err) => {
-        console.error(`Error opening file stream: ${filePath}`, err);
         reject(err);
     });
   });
@@ -152,9 +139,8 @@ async function saveLastFile(filePath) {
   try {
     const config = { lastFilePath: filePath };
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
-    console.log('Saved last file path:', filePath);
   } catch (error) {
-    console.error('Error saving last file path:', error);
+    // Error handling without console.log
   }
 }
 
@@ -164,22 +150,15 @@ async function loadLastFile() {
     const data = await fs.readFile(configPath, 'utf-8');
     const config = JSON.parse(data);
     if (config && config.lastFilePath) {
-        console.log('Loaded last file path:', config.lastFilePath);
         try {
             await fs.access(config.lastFilePath);
             return config.lastFilePath;
         } catch (accessError) {
-            console.warn(`Last opened file not found: ${config.lastFilePath}`);
             return null;
         }
     }
     return null;
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      console.log('Config file not found, no last file path loaded.');
-    } else {
-      console.error('Error loading last file path:', error);
-    }
     return null;
   }
 }
@@ -220,7 +199,6 @@ app.whenReady().then(async () => {
 
     if (!result.canceled && result.filePaths.length > 0) {
       const filePath = result.filePaths[0];
-      console.log('Selected file:', filePath);
       await saveLastFile(filePath);
       return filePath;
     }
@@ -236,7 +214,6 @@ app.whenReady().then(async () => {
       const content = await fs.readFile(filePath, 'utf-8');
       return content;
     } catch (error) {
-      console.error(`Error reading file ${filePath}:`, error);
       if (error.code === 'ENOENT') {
         throw new Error(`File not found: ${filePath}`);
       } else {
@@ -247,15 +224,12 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('get-fight-ids', async (event, filePath) => {
     if (!filePath) {
-      console.warn('Request to get fight data without providing a file path.');
       throw new Error('Log file path is required.');
     }
     try {
-      console.log(`Analyzing log file for fight data: ${filePath}`);
       const fightData = await analyzeLogFile(filePath);
       return fightData;
     } catch (error) {
-      console.error(`Error analyzing log file ${filePath} for fight data:`, error);
       throw new Error(`Failed to analyze log file: ${error.message}`);
     }
   });
@@ -265,7 +239,6 @@ app.whenReady().then(async () => {
   const lastFilePath = await loadLastFile();
   if (lastFilePath) {
     createdWindow.webContents.on('did-finish-load', () => {
-      console.log(`Sending load-file event for: ${lastFilePath}`);
       createdWindow.webContents.send('load-file', lastFilePath);
     });
   }
