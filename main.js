@@ -40,6 +40,22 @@ async function analyzeLogFile(filePath) {
   const fighterJoinRegex = /\[_FL_\]\s+fightId=(\d+)\s+(.+?)\s+breed\s+:\s+\d+\s+\[(-?\d+)\]\s+isControlledByAI=(true|false)/;
   const damageRegex = /\[Information \(jeu\)\]\s+(.+?):\s+-([\d\s]+)\s+PV\s+(\(.+\))/;
   const spellCastRegex = /\[Information \(jeu\)\]\s+(.+?)\s+lance le sort\s+.*/;
+  const statusRegex = /\[Information \(jeu\)\]\s+(.+?):\s+(\w+)\s+\(\+(\d+)\s+Niv\.\)(?:\s+\((.+)\))?/;
+  const statusRemovalRegex = /\[Information \(jeu\)\]\s+(.+?):\\s+n'est plus sous l'emprise '(.+?)'/;
+
+  const statusDamageSourceMap = {
+    'Tétatoxine': 'Toxines',
+    'Maudit': 'Maudit',
+  };
+
+  function getStatusNameFromContext(context) {
+    for (const key in statusDamageSourceMap) {
+      if (context.includes(`(${key})`)) {
+        return statusDamageSourceMap[key];
+      }
+    }
+    return null;
+  }
 
   return new Promise((resolve, reject) => {
     rl.on('line', (line) => {
@@ -49,6 +65,8 @@ async function analyzeLogFile(filePath) {
       const fighterMatch = line.match(fighterJoinRegex);
       const damageMatch = line.match(damageRegex);
       const spellCastMatch = line.match(spellCastRegex);
+      const statusMatch = line.match(statusRegex);
+      const statusRemovalMatch = line.match(statusRemovalRegex);
 
       if (startMatch) {
         if (activeFight) {
@@ -81,7 +99,13 @@ async function analyzeLogFile(filePath) {
 
               if (activeFight.id === joinFightId) {
                   if (!activeFight.fighters.some(f => f.fighterId === fighterId)) {
-                      activeFight.fighters.push({ name: fighterName, fighterId: fighterId, isAI: isAI, damageDealt: 0 });
+                      activeFight.fighters.push({
+                          name: fighterName,
+                          fighterId: fighterId,
+                          isAI: isAI,
+                          damageDealt: 0,
+                          activeStatuses: []
+                      });
                       currentFight.fighters = [...activeFight.fighters];
                   }
               }
@@ -90,30 +114,75 @@ async function analyzeLogFile(filePath) {
       } else if (spellCastMatch && activeFight) {
           lastAttackerName = spellCastMatch[1].trim();
 
-      } else if (damageMatch && activeFight && lastAttackerName) {
+      } else if (statusMatch && activeFight) {
+          const targetName = statusMatch[1].trim();
+          const statusName = statusMatch[2];
+          const statusLevel = parseInt(statusMatch[3], 10);
+          const statusContext = statusMatch[4];
+
+          const targetFighter = activeFight.fighters.find(f => f.name === targetName);
+          if (targetFighter) {
+              const existingStatusIndex = targetFighter.activeStatuses.findIndex(s => s.name === statusName);
+              let appliedBy = lastAttackerName;
+
+              if (existingStatusIndex !== -1 && statusContext) {
+                  appliedBy = targetFighter.activeStatuses[existingStatusIndex].appliedBy;
+              }
+
+              targetFighter.activeStatuses = targetFighter.activeStatuses.filter(s => s.name !== statusName);
+              targetFighter.activeStatuses.push({
+                  name: statusName,
+                  level: statusLevel,
+                  appliedBy: appliedBy
+              });
+          }
+
+      } else if (damageMatch && activeFight) {
+          const targetName = damageMatch[1].trim();
           const damageString = damageMatch[2].replace(/\s/g, '');
           const damageAmount = parseInt(damageString, 10);
+          const damageSourceContext = damageMatch[3];
 
           if (!isNaN(damageAmount)) {
               activeFight.totalDamage += damageAmount;
-
-              const attacker = activeFight.fighters.find(f => f.name === lastAttackerName);
-              if (attacker) {
-                  attacker.damageDealt += damageAmount;
-              }
-
               if (currentFight.id === activeFight.id) {
                   currentFight.totalDamage = activeFight.totalDamage;
               }
+
+              let damageAttributed = false;
+
+              const statusSourceName = getStatusNameFromContext(damageSourceContext);
+              if (statusSourceName) {
+                  const targetFighter = activeFight.fighters.find(f => f.name === targetName);
+                  if (targetFighter) {
+                      const causingStatus = targetFighter.activeStatuses.find(s => s.name === statusSourceName);
+                      if (causingStatus && causingStatus.appliedBy) {
+                          const caster = activeFight.fighters.find(f => f.name === causingStatus.appliedBy);
+                          if (caster) {
+                              caster.damageDealt += damageAmount;
+                              damageAttributed = true;
+                          }
+                      }
+                  }
+              }
+
+              if (!damageAttributed && lastAttackerName) {
+                  const attacker = activeFight.fighters.find(f => f.name === lastAttackerName);
+                  if (attacker && attacker.name !== targetName) {
+                      attacker.damageDealt += damageAmount;
+                      damageAttributed = true;
+                  }
+              }
+
           }
 
       } else if (endMatch) {
         const endedFightId = parseInt(endMatch[2], 10);
 
         if (activeFight && activeFight.id === endedFightId) {
-          lastCompletedFight = { ...activeFight };
+          lastCompletedFight = { ...activeFight, fighters: [...activeFight.fighters] };
         } else if (activeFight) {
-          lastCompletedFight = { ...activeFight, id: endedFightId };
+          lastCompletedFight = { ...activeFight, id: endedFightId, fighters: [...(activeFight.fighters || [])] };
         } else {
            lastCompletedFight = { id: endedFightId, totalDamage: 0, fighters: [] };
         }
@@ -125,14 +194,17 @@ async function analyzeLogFile(filePath) {
     });
 
     rl.on('close', () => {
+      const finalLastCompletedFighters = lastCompletedFight.fighters ? [...lastCompletedFight.fighters] : [];
+      const finalCurrentFighters = currentFight.id && activeFight ? [...activeFight.fighters] : (currentFight.fighters || []);
+
       resolve({
           lastCompletedFightId: lastCompletedFight.id,
           lastCompletedFightTotalDamage: lastCompletedFight.totalDamage,
-          lastCompletedFightFighters: lastCompletedFight.fighters || [],
+          lastCompletedFightFighters: finalLastCompletedFighters,
           currentFightId: currentFight.id,
           currentFightStartTime: currentFight.startTime,
           currentFightTotalDamage: currentFight.totalDamage,
-          currentFightFighters: currentFight.fighters || []
+          currentFightFighters: finalCurrentFighters
       });
     });
 
