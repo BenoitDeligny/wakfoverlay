@@ -1,8 +1,6 @@
 const closeBtn = document.getElementById('close-btn');
 const selectFileBtn = document.getElementById('select-file-btn');
 const logContent = document.getElementById('logContent');
-const currentFightIdElement = document.getElementById('current-fight-id');
-const lastFightIdElement = document.getElementById('last-fight-id');
 const currentFightTotalDamageElement = document.getElementById('current-fight-total-damage');
 const lastFightTotalDamageElement = document.getElementById('last-fight-total-damage');
 const currentFightersListElement = document.getElementById('current-fighters-list');
@@ -19,9 +17,16 @@ if (closeBtn) {
 
 if (selectFileBtn) {
   selectFileBtn.addEventListener('click', async () => {
-    selectedFilePath = await window.electronAPI.selectFile();
-    if (selectedFilePath) {
-      startPolling();
+    try {
+      selectedFilePath = await window.electronAPI.selectFile();
+      if (selectedFilePath) {
+        const initialContent = await window.electronAPI.readFileContent(selectedFilePath);
+        updateLogScreen(initialContent);
+        startPolling();
+      }
+    } catch (error) {
+        updateLogScreen(`Error selecting or reading file: ${error.message}`);
+        if (pollInterval) clearInterval(pollInterval);
     }
   });
 }
@@ -38,21 +43,14 @@ function createFighterListHTML(fighters) {
   if (!fighters || fighters.length === 0) {
     return '<p>No fighter data available.</p>';
   }
-  let html = '<ul>';
+  let html = '';
   fighters.forEach(fighter => {
-    html += `<li>${fighter.name} (ID: ${fighter.fighterId})${fighter.isAI ? ' [AI]' : ''}</li>`;
+    html += `<li>${fighter.name}</li>`;
   });
-  html += '</ul>';
   return html;
 }
 
 function updateFightDisplays(fightData) {
-  if (currentFightIdElement) {
-    currentFightIdElement.textContent = fightData.currentFightId !== null ? fightData.currentFightId : 'N/A';
-  }
-  if (lastFightIdElement) {
-    lastFightIdElement.textContent = fightData.lastCompletedFightId !== null ? fightData.lastCompletedFightId : 'N/A';
-  }
   if (currentFightTotalDamageElement) {
     currentFightTotalDamageElement.textContent = fightData.currentFightTotalDamage !== null ? fightData.currentFightTotalDamage.toLocaleString() : '0';
   }
@@ -72,13 +70,16 @@ async function fetchLogContent() {
   try {
     const fightData = await window.electronAPI.getFightIds(selectedFilePath);
     updateFightDisplays(fightData);
+
+    const currentLogContent = await window.electronAPI.readFileContent(selectedFilePath);
+    updateLogScreen(currentLogContent);
+
   } catch (error) {
-    if (currentFightIdElement) currentFightIdElement.textContent = 'Error';
-    if (lastFightIdElement) lastFightIdElement.textContent = 'Error';
     if (currentFightTotalDamageElement) currentFightTotalDamageElement.textContent = 'Error';
     if (lastFightTotalDamageElement) lastFightTotalDamageElement.textContent = 'Error';
     if (currentFightersListElement) currentFightersListElement.innerHTML = '<p>Error loading data.</p>';
     if (lastFightersListElement) lastFightersListElement.innerHTML = '<p>Error loading data.</p>';
+    updateLogScreen(`Error fetching data: ${error.message}`);
 
     if (pollInterval) {
       clearInterval(pollInterval);
@@ -87,21 +88,23 @@ async function fetchLogContent() {
   }
 }
 
-window.electronAPI.onLoadFile((filePath) => {
+window.electronAPI.onLoadFile(async (filePath) => {
   if (filePath) {
     selectedFilePath = filePath;
-    startPolling();
+    try {
+        // Fetch and display initial content immediately on load
+        const initialContent = await window.electronAPI.readFileContent(selectedFilePath);
+        updateLogScreen(initialContent);
+        startPolling(); // Start polling for fight data AND log content updates
+    } catch (error) {
+        updateLogScreen(`Error reading initial file: ${error.message}`);
+        if (pollInterval) clearInterval(pollInterval);
+    }
   }
 });
 
 function updateLogScreen(logData) {
-  const logContent = document.getElementById('logs-content');
   if (logContent) {
     logContent.textContent = logData;
-    logContent.scrollTop = logContent.scrollHeight;
   }
 }
-
-window.electronAPI.onUpdateLog((_event, logData) => {
-  updateLogScreen(logData);
-});
