@@ -45,7 +45,7 @@ function createFighterListHTML(fighters) {
   }
   let html = '';
   fighters.forEach(fighter => {
-    html += `<li>${fighter.name}</li>`;
+    html += `<li>${fighter.name}: 0 (0%)</li>`;
   });
   return html;
 }
