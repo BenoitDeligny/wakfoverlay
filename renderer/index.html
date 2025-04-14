@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self';">
   <title>WakfOverlay</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -15,7 +16,22 @@
     <button id="select-file-btn">Select Test File</button>
     <pre id="logContent"></pre>
   </div>
-
+  <div id="fight-screen" class="screen">
+    <h2>Current Fight - Live Damage</h2>
+    <div id="fight-content">
+    </div>
+    <div id="fight-total">
+    </div>
+  </div>
+  
+  <div id="last-fight-screen" class="screen">
+    <h2>Last Fight Summary - Total Damage</h2>
+    <div id="last-fight-content">
+    </div>
+    <div id="last-fight-total">
+    </div>
+  </div>
+  
   <script src="script.js"></script>
 </body>
 </html> 

@@ -71,4 +71,143 @@ h1 {
   border-radius: 4px;
   white-space: pre-wrap; 
   word-break: break-all; 
+}
+
+#fight-screen h2, #last-fight-screen h2 {
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 1.2em;
+}
+
+#fight-screen, #last-fight-screen {
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  padding: 15px;
+  margin-top: 10px;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 5px;
+}
+
+#fight-screen {
+  background-color: rgba(40, 20, 60, 0.85);
+}
+
+#last-fight-screen {
+  background-color: rgba(40, 20, 60, 0.85);
+  margin-top: 15px;
+}
+
+#fight-content, #last-fight-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  font-family: monospace;
+  margin-bottom: 10px;
+  padding-right: 5px;
+}
+
+#fight-total, #last-fight-total {
+  font-weight: bold;
+  font-family: monospace;
+  padding-top: 5px;
+  font-size: 1.1em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+#fight-total .damage-total {
+  font-size: 1.6em;
+  margin-top: 10px;
+  padding: 8px;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.3);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.damage-total {
+  font-size: 1.2em;
+  margin-top: 5px;
+  text-align: center;
+  color: #ffcc00;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+  letter-spacing: 1px;
+}
+
+#last-fight-total .damage-total {
+  font-size: 1.6em;
+  margin-top: 10px;
+  padding: 8px;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.3);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.no-data {
+  text-align: center;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 15px;
+}
+
+.fight-header {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-top: 10px;
+  padding: 5px 0;
+  color: #ffcc00;
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.3);
+}
+
+.fight-divider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 10px 0;
+}
+
+/* New styles for the enhanced damage display */
+.fighter-row {
+  font-weight: bold;
+  font-size: 1.1em;
+  padding: 8px;
+  margin-top: 10px;
+  background-color: rgba(55, 27, 84, 0.7);
+  border-radius: 4px;
+  color: #ffcc00;
+}
+
+.spell-breakdown {
+  margin-left: 15px;
+  margin-bottom: 15px;
+  padding: 5px;
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.spell-row {
+  font-size: 0.9em;
+  padding: 4px 8px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.spell-row:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+  .fighter-row {
+    font-size: 1em;
+    padding: 6px;
+  }
+  
+  .spell-row {
+    font-size: 0.8em;
+  }
+  
+  .spell-breakdown {
+    margin-left: 10px;
+  }
 } 

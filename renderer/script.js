@@ -35,6 +35,8 @@ async function fetchLogContent() {
     const content = await window.electronAPI.readFileContent(selectedFilePath);
     logContent.textContent = content; 
     logContent.scrollTop = logContent.scrollHeight;
+    
+    
   } catch (error) {
     console.error('Error fetching log content:', error);
     logContent.textContent = `Error reading file: ${error.message}`;
@@ -51,4 +53,17 @@ window.electronAPI.onLoadFile((filePath) => {
     selectedFilePath = filePath;
     startPolling();
   }
-}); 
+});
+
+function updateLogScreen(logData) {
+  const logContent = document.getElementById('logs-content');
+  if (logContent) {
+    logContent.textContent = logData;
+    logContent.scrollTop = logContent.scrollHeight;
+  }
+}
+
+window.electronAPI.onUpdateLog((_event, logData) => {
+  updateLogScreen(logData);
+});
+
