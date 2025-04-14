@@ -39,13 +39,18 @@ function startPolling() {
   pollInterval = setInterval(fetchLogContent, 2000);
 }
 
-function createFighterListHTML(fighters) {
+function createFighterListHTML(fighters, totalFightDamage) {
   if (!fighters || fighters.length === 0) {
     return '<p>No fighter data available.</p>';
   }
+
+  fighters.sort((a, b) => (b.damageDealt || 0) - (a.damageDealt || 0));
+
   let html = '';
   fighters.forEach(fighter => {
-    html += `<li>${fighter.name}: 0 (0%)</li>`;
+    const damage = fighter.damageDealt || 0;
+    const percentage = (totalFightDamage > 0) ? ((damage / totalFightDamage) * 100).toFixed(1) : 0;
+    html += `<li>${fighter.name}: ${damage.toLocaleString()} (${percentage}%)</li>`;
   });
   return html;
 }
@@ -58,10 +63,10 @@ function updateFightDisplays(fightData) {
     lastFightTotalDamageElement.textContent = fightData.lastCompletedFightTotalDamage !== null ? fightData.lastCompletedFightTotalDamage.toLocaleString() : '0';
   }
   if (currentFightersListElement) {
-    currentFightersListElement.innerHTML = createFighterListHTML(fightData.currentFightFighters);
+    currentFightersListElement.innerHTML = createFighterListHTML(fightData.currentFightFighters, fightData.currentFightTotalDamage);
   }
   if (lastFightersListElement) {
-    lastFightersListElement.innerHTML = createFighterListHTML(fightData.lastCompletedFightFighters);
+    lastFightersListElement.innerHTML = createFighterListHTML(fightData.lastCompletedFightFighters, fightData.lastCompletedFightTotalDamage);
   }
 }
 
@@ -92,10 +97,9 @@ window.electronAPI.onLoadFile(async (filePath) => {
   if (filePath) {
     selectedFilePath = filePath;
     try {
-        // Fetch and display initial content immediately on load
         const initialContent = await window.electronAPI.readFileContent(selectedFilePath);
         updateLogScreen(initialContent);
-        startPolling(); // Start polling for fight data AND log content updates
+        startPolling();
     } catch (error) {
         updateLogScreen(`Error reading initial file: ${error.message}`);
         if (pollInterval) clearInterval(pollInterval);
