@@ -110,5 +110,6 @@ window.electronAPI.onLoadFile(async (filePath) => {
 function updateLogScreen(logData) {
   if (logContent) {
     logContent.textContent = logData;
+    logContent.scrollTop = logContent.scrollHeight;
   }
 }
