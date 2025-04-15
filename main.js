@@ -279,7 +279,6 @@ function createWindow () {
     height: 550,
     transparent: true, 
     frame: false, 
-    alwaysOnTop: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -298,6 +297,12 @@ app.whenReady().then(async () => {
     const win = BrowserWindow.fromWebContents(webContents);
     if (win) {
       win.close();
+    }
+  });
+
+  ipcMain.on('toggle-always-on-top', (event, isAlwaysOnTop) => {
+    if (mainWindow) {
+      mainWindow.setAlwaysOnTop(isAlwaysOnTop);
     }
   });
 

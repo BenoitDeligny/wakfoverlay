@@ -5,6 +5,7 @@ const currentFightTotalDamageElement = document.getElementById('current-fight-to
 const lastFightTotalDamageElement = document.getElementById('last-fight-total-damage');
 const currentFightersListElement = document.getElementById('current-fighters-list');
 const lastFightersListElement = document.getElementById('last-fighters-list');
+const alwaysOnTopCheckbox = document.getElementById('always-on-top-checkbox');
 
 let selectedFilePath = null;
 let pollInterval = null;
@@ -28,6 +29,20 @@ if (selectFileBtn) {
         updateLogScreen(`Error selecting or reading file: ${error.message}`);
         if (pollInterval) clearInterval(pollInterval);
     }
+  });
+}
+
+if (alwaysOnTopCheckbox) {
+  // Set initial state based on a potential stored preference (optional)
+  // const isAlwaysOnTop = localStorage.getItem('alwaysOnTop') === 'true';
+  // alwaysOnTopCheckbox.checked = isAlwaysOnTop;
+  // window.electronAPI.toggleAlwaysOnTop(isAlwaysOnTop);
+
+  alwaysOnTopCheckbox.addEventListener('change', (event) => {
+    const isChecked = event.target.checked;
+    window.electronAPI.toggleAlwaysOnTop(isChecked);
+    // Store preference (optional)
+    // localStorage.setItem('alwaysOnTop', isChecked);
   });
 }
 
