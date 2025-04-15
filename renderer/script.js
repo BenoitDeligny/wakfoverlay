@@ -128,3 +128,29 @@ function updateLogScreen(logData) {
     logContent.scrollTop = logContent.scrollHeight;
   }
 }
+
+// Screen Navigation Logic
+document.addEventListener('DOMContentLoaded', () => { // Ensure DOM is fully loaded
+  const navigationContainer = document.querySelector('.navigation');
+  const screens = document.querySelectorAll('.screen');
+  const navButtons = document.querySelectorAll('.nav-button');
+
+  if (navigationContainer) {
+    navigationContainer.addEventListener('click', (event) => {
+      if (event.target.matches('.nav-button')) {
+        const targetScreenId = event.target.dataset.target;
+
+        // Deactivate current screen and button
+        screens.forEach(screen => screen.classList.remove('active'));
+        navButtons.forEach(button => button.classList.remove('active'));
+
+        // Activate new screen and button
+        const targetScreen = document.getElementById(targetScreenId);
+        if (targetScreen) {
+          targetScreen.classList.add('active');
+        }
+        event.target.classList.add('active');
+      }
+    });
+  }
+});

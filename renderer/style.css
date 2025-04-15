@@ -85,8 +85,6 @@ h1 {
   padding: 15px;
   margin-top: 10px;
   max-height: 400px;
-  display: flex;
-  flex-direction: column;
   border-radius: 5px;
 }
 
@@ -263,8 +261,45 @@ input:checked + .slider:before {
 
 .toggle-label {
   -webkit-app-region: no-drag;
-  margin-left: 5px; /* Space between switch and label */
+  margin-left: 8px;
   vertical-align: middle;
-  font-size: 0.8em; /* Slightly smaller font */
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9em;
+}
+
+/* Screen Switching Styles */
+.screen {
+  display: none; /* Hide screens by default */
+  /* Inherit existing styles like border, padding, etc. */
+}
+
+.screen.active {
+  display: flex; /* Show the active screen */
+  flex-direction: column; /* Apply flex properties only when active */
+}
+
+.navigation {
+  padding: 10px 20px 0px 20px; /* Align with other content padding */
+  -webkit-app-region: no-drag;
+}
+
+.nav-button {
+  padding: 8px 15px;
+  margin-right: 10px;
+  background-color: rgba(114, 114, 114, 0.5);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.nav-button:hover {
+  background-color: rgba(134, 134, 134, 0.6);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.nav-button.active {
+  background-color: rgba(40, 20, 60, 0.85); /* Match active screen background */
+  border-color: rgba(255, 255, 255, 0.8);
+  font-weight: bold;
 } 
