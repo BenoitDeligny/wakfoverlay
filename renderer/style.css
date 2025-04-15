@@ -86,15 +86,7 @@ h1 {
   margin-top: 10px;
   max-height: 400px;
   border-radius: 5px;
-}
-
-#fight-screen {
   background-color: rgba(40, 20, 60, 0.85);
-}
-
-#last-fight-screen, #session-summary-screen {
-  background-color: rgba(40, 20, 60, 0.85);
-  margin-top: 15px;
 }
 
 #fight-content, #last-fight-content, #session-summary-content {
@@ -166,7 +158,6 @@ h1 {
   margin: 10px 0;
 }
 
-/* New styles for the enhanced damage display */
 .fighter-row {
   font-weight: bold;
   font-size: 1.1em;
@@ -194,7 +185,6 @@ h1 {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Responsive styling */
 @media (max-width: 768px) {
   .fighter-row {
     font-size: 1em;
@@ -210,13 +200,12 @@ h1 {
   }
 }
 
-/* Toggle Switch Styles */
 .toggle-switch {
   -webkit-app-region: no-drag;
   position: relative;
   display: inline-block;
-  width: 40px; /* Smaller width */
-  height: 20px; /* Smaller height */
+  width: 40px;
+  height: 20px;
   margin-left: 15px;
   vertical-align: middle;
 }
@@ -236,16 +225,16 @@ h1 {
   bottom: 0;
   background-color: #ccc;
   transition: .4s;
-  border-radius: 20px; /* Adjusted for smaller height */
+  border-radius: 20px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 16px; /* Smaller height */
-  width: 16px; /* Smaller width */
-  left: 2px; /* Adjusted position */
-  bottom: 2px; /* Adjusted position */
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
   background-color: white;
   transition: .4s;
   border-radius: 50%;
@@ -256,7 +245,7 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translateX(20px); /* Adjusted translation */
+  transform: translateX(20px);
 }
 
 .toggle-label {
@@ -266,31 +255,31 @@ input:checked + .slider:before {
   font-size: 0.9em;
 }
 
-/* Screen Switching Styles */
 .screen {
-  display: none; /* Hide screens by default */
-  /* Inherit existing styles like border, padding, etc. */
+  display: none;
 }
 
 .screen.active {
-  display: flex; /* Show the active screen */
-  flex-direction: column; /* Apply flex properties only when active */
+  display: flex;
+  flex-direction: column;
 }
 
 .navigation {
-  padding: 10px 20px 0px 20px; /* Align with other content padding */
+  padding: 10px 20px 10px 20px;
   -webkit-app-region: no-drag;
+  background-color: rgba(30, 15, 45, 1);
 }
 
 .nav-button {
   padding: 8px 15px;
   margin-right: 10px;
-  background-color: rgba(114, 114, 114, 0.5);
+  background-color: rgba(80, 60, 100, 1);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: none;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s, border-color 0.3s;
+  box-shadow: 0 0 0 1px rgba(80, 60, 100, 1);
 }
 
 .nav-button:hover {
@@ -299,7 +288,7 @@ input:checked + .slider:before {
 }
 
 .nav-button.active {
-  background-color: rgba(40, 20, 60, 0.85); /* Match active screen background */
-  border-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(40, 20, 60, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   font-weight: bold;
-} 
+}
