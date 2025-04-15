@@ -73,14 +73,14 @@ h1 {
   word-break: break-all; 
 }
 
-#fight-screen h2, #last-fight-screen h2 {
+#fight-screen h2, #last-fight-screen h2, #session-summary-screen h2 {
   margin-bottom: 10px;
   padding-bottom: 5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.5);
   font-size: 1.2em;
 }
 
-#fight-screen, #last-fight-screen {
+#fight-screen, #last-fight-screen, #session-summary-screen {
   border: 1px solid rgba(255, 255, 255, 0.8);
   padding: 15px;
   margin-top: 10px;
@@ -92,12 +92,12 @@ h1 {
   background-color: rgba(40, 20, 60, 0.85);
 }
 
-#last-fight-screen {
+#last-fight-screen, #session-summary-screen {
   background-color: rgba(40, 20, 60, 0.85);
   margin-top: 15px;
 }
 
-#fight-content, #last-fight-content {
+#fight-content, #last-fight-content, #session-summary-content {
   flex-grow: 1;
   overflow-y: auto;
   font-family: monospace;
@@ -105,7 +105,7 @@ h1 {
   padding-right: 5px;
 }
 
-#fight-total, #last-fight-total {
+#fight-total, #last-fight-total, #session-summary-total {
   font-weight: bold;
   font-family: monospace;
   padding-top: 5px;

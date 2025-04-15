@@ -22,6 +22,7 @@
   <div class="navigation">
     <button id="nav-current-fight" class="nav-button active" data-target="fight-screen">Current Fight</button>
     <button id="nav-last-fight" class="nav-button" data-target="last-fight-screen">Last Fight</button>
+    <button id="nav-session-summary" class="nav-button" data-target="session-summary-screen">Session Summary</button>
   </div>
   
   <div id="fight-screen" class="screen active">
@@ -41,6 +42,16 @@
     </div>
     <div id="last-fight-total">
       Total Damage: <span id="last-fight-total-damage">0</span>
+    </div>
+  </div>
+
+  <div id="session-summary-screen" class="screen">
+    <h2>Session Summary</h2>
+    <div id="session-summary-content">
+       <div id="session-fighters-list"></div>
+    </div>
+    <div id="session-summary-total">
+      Total Session Damage: <span id="session-total-damage">0</span>
     </div>
   </div>
 
