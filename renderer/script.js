@@ -6,6 +6,7 @@ const lastFightTotalDamageElement = document.getElementById('last-fight-total-da
 const currentFightersListElement = document.getElementById('current-fighters-list');
 const lastFightersListElement = document.getElementById('last-fighters-list');
 const alwaysOnTopCheckbox = document.getElementById('always-on-top-checkbox');
+const sessionSummaryContentElement = document.getElementById('session-summary-content');
 
 let selectedFilePath = null;
 let pollInterval = null;
@@ -85,11 +86,48 @@ function updateFightDisplays(fightData) {
   }
 }
 
+async function fetchSessionData() {
+  if (!selectedFilePath) return;
+  try {
+    const sessionData = await window.electronAPI.getSessionData(selectedFilePath);
+    updateSessionSummaryDisplay(sessionData);
+  } catch (error) {
+    if (sessionSummaryContentElement) sessionSummaryContentElement.innerHTML = `<p>Error loading session data: ${error.message}</p>`;
+    console.error('Error fetching session data:', error);
+    // Optionally stop polling if session data fails
+    // if (pollInterval) {
+    //   clearInterval(pollInterval);
+    //   pollInterval = null;
+    // }
+  }
+}
+
+function updateSessionSummaryDisplay(sessions) {
+  if (!sessionSummaryContentElement) return;
+
+  if (!sessions || sessions.length === 0) {
+    sessionSummaryContentElement.innerHTML = '<p>No completed sessions found in this log file.</p>';
+    return;
+  }
+
+  let html = '<ul>';
+  sessions.forEach(session => {
+    // Assuming timestamps are in HH:MM:SS,ms format
+    html += `<li>Session: ${session.startTime.split(',')[0]} - ${session.endTime.split(',')[0]}</li>`;
+  });
+  html += '</ul>';
+
+  sessionSummaryContentElement.innerHTML = html;
+}
+
 async function fetchLogContent() {
   if (!selectedFilePath) return;
   try {
     const fightData = await window.electronAPI.getFightIds(selectedFilePath);
     updateFightDisplays(fightData);
+
+    // Fetch session data as well
+    fetchSessionData(); 
 
     const currentLogContent = await window.electronAPI.readFileContent(selectedFilePath);
     updateLogScreen(currentLogContent);
@@ -115,6 +153,7 @@ window.electronAPI.onLoadFile(async (filePath) => {
         const initialContent = await window.electronAPI.readFileContent(selectedFilePath);
         updateLogScreen(initialContent);
         startPolling();
+        fetchSessionData(); // Also fetch session data on initial load
     } catch (error) {
         updateLogScreen(`Error reading initial file: ${error.message}`);
         if (pollInterval) clearInterval(pollInterval);

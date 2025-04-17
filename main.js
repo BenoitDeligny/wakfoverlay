@@ -244,6 +244,63 @@ async function analyzeLogFile(filePath) {
   });
 }
 
+async function analyzeSessionData(filePath) {
+  const sessions = [];
+  let currentSessionStart = null;
+  const startRegex = /^\s*INFO\s+([\d:,\.]+)\s+\[Net-Cnx-wakfu-(?!dispatcher).*\.ankama-games\.com:.*>0\]\s+\(.*\)\s+-\s+onNewConnection ChannelHandlerContext/;
+  const endRegex = /^\s*INFO\s+([\d:,\.]+)\s+\[AWT-EventQueue-0\]\s+\(.*\)\s+-\s+Sending DisconnectionMessage to Servers\. Reason : {UI Closed}\s*$/;
+
+  try {
+    await fs.access(filePath);
+  } catch (error) {
+    console.error('Error accessing log file for session data:', error);
+    return []; // Return empty array if file not accessible
+  }
+
+  const fileStream = fsSync.createReadStream(filePath);
+  const rl = readline.createInterface({
+    input: fileStream,
+    crlfDelay: Infinity,
+  });
+
+  return new Promise((resolve, reject) => {
+    rl.on('line', (line) => {
+      const startMatch = line.match(startRegex);
+      const endMatch = line.match(endRegex);
+
+      if (startMatch) {
+        // If we find a new start without an end for the previous one, discard the old start
+        currentSessionStart = startMatch[1].trim();
+      } else if (endMatch && currentSessionStart) {
+        // Found an end, and we have a start time associated with it
+        sessions.push({ startTime: currentSessionStart, endTime: endMatch[1].trim() });
+        currentSessionStart = null; // Reset start time after pairing
+      } else if (endMatch && !currentSessionStart) {
+        // Found an end without a preceding start (might happen with log rotation/partial logs)
+        // Optionally handle this case, e.g., log a warning or create a session with null start
+        console.warn(`Found session end without a start: ${endMatch[1]}`);
+      }
+    });
+
+    rl.on('close', () => {
+      // If the file ends and we still have an unmatched start time,
+      // we could optionally add it as an ongoing session, but for now,
+      // we only list completed sessions.
+      resolve(sessions);
+    });
+
+    rl.on('error', (err) => {
+      console.error('Error reading log file for session data:', err);
+      reject(err);
+    });
+
+    fileStream.on('error', (err) => {
+      console.error('Error reading log file stream for session data:', err);
+      reject(err);
+    });
+  });
+}
+
 async function saveLastFile(filePath) {
   try {
     const config = { lastFilePath: filePath };
@@ -345,6 +402,18 @@ app.whenReady().then(async () => {
       return fightData;
     } catch (error) {
       throw new Error(`Failed to analyze log file: ${error.message}`);
+    }
+  });
+
+  ipcMain.handle('get-session-data', async (event, filePath) => {
+    if (!filePath) {
+      throw new Error('Log file path is required.');
+    }
+    try {
+      const sessionData = await analyzeSessionData(filePath);
+      return sessionData;
+    } catch (error) {
+      throw new Error(`Failed to analyze session data: ${error.message}`);
     }
   });
 
