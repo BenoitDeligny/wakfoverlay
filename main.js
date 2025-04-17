@@ -246,16 +246,31 @@ async function analyzeLogFile(filePath) {
 
 async function analyzeSessionData(filePath) {
   const sessions = [];
-  let currentSessionStart = null;
+  let sessionStartDate = null;
+  let sessionStartTime = null;
+  let currentSessionDamage = 0;
+
   const startRegex = /^\s*INFO\s+([\d:,\.]+)\s+\[Net-Cnx-wakfu-(?!dispatcher).*\.ankama-games\.com:.*>0\]\s+\(.*\)\s+-\s+onNewConnection ChannelHandlerContext/;
   const endRegex = /^\s*INFO\s+([\d:,\.]+)\s+\[AWT-EventQueue-0\]\s+\(.*\)\s+-\s+Sending DisconnectionMessage to Servers\. Reason : {UI Closed}\s*$/;
+  const damageRegex = /\[Information \(jeu\)\]\s+(.+?):\s+-([\d\s]+)\s+PV\s+(\(.+\))/;
+  const timeRegex = /^\s*INFO\s+([\d:,\.]+)\s+.*/; // General regex to capture timestamp
 
   try {
     await fs.access(filePath);
   } catch (error) {
     console.error('Error accessing log file for session data:', error);
-    return []; // Return empty array if file not accessible
+    return [];
   }
+
+  // Get initial date from file modification time
+  let currentDate = new Date(); // Default to now if stat fails
+  try {
+      currentDate = fsSync.statSync(filePath).mtime;
+  } catch (statError) {
+      console.error('Error getting file stats, using current date as fallback:', statError);
+  }
+
+  let lastTime = '00:00:00,000'; // Keep track of the last seen time to detect day rollover
 
   const fileStream = fsSync.createReadStream(filePath);
   const rl = readline.createInterface({
@@ -263,29 +278,67 @@ async function analyzeSessionData(filePath) {
     crlfDelay: Infinity,
   });
 
+  // Helper to format Date object to YYYY-MM-DD
+  const formatDate = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  // Helper to compare time strings (HH:MM:SS,ms)
+  const isTimeEarlier = (time1, time2) => {
+      // Simple string comparison works for HH:MM:SS format
+      return time1 < time2;
+  };
+
   return new Promise((resolve, reject) => {
     rl.on('line', (line) => {
+      const timeMatch = line.match(timeRegex);
+      let currentTimeString = null;
+
+      if (timeMatch) {
+        currentTimeString = timeMatch[1].trim();
+        // Check for day rollover
+        if (isTimeEarlier(currentTimeString, lastTime)) {
+          currentDate.setDate(currentDate.getDate() + 1); // Increment the date
+        }
+        lastTime = currentTimeString;
+      }
+
       const startMatch = line.match(startRegex);
       const endMatch = line.match(endRegex);
+      const damageMatch = line.match(damageRegex);
 
       if (startMatch) {
-        // If we find a new start without an end for the previous one, discard the old start
-        currentSessionStart = startMatch[1].trim();
-      } else if (endMatch && currentSessionStart) {
-        // Found an end, and we have a start time associated with it
-        sessions.push({ startTime: currentSessionStart, endTime: endMatch[1].trim() });
-        currentSessionStart = null; // Reset start time after pairing
-      } else if (endMatch && !currentSessionStart) {
-        // Found an end without a preceding start (might happen with log rotation/partial logs)
-        // Optionally handle this case, e.g., log a warning or create a session with null start
-        console.warn(`Found session end without a start: ${endMatch[1]}`);
+        sessionStartDate = formatDate(currentDate);
+        sessionStartTime = startMatch[1].trim();
+        currentSessionDamage = 0;
+      } else if (endMatch && sessionStartTime) { // Use sessionStartTime as the flag for an active session
+        const sessionEndDate = formatDate(currentDate);
+        const sessionEndTime = endMatch[1].trim();
+        sessions.push({
+          startDate: sessionStartDate,
+          startTime: sessionStartTime,
+          endDate: sessionEndDate,
+          endTime: sessionEndTime,
+          totalDamage: currentSessionDamage
+        });
+        sessionStartDate = null;
+        sessionStartTime = null;
+        currentSessionDamage = 0;
+      } else if (endMatch && !sessionStartTime) {
+        console.warn(`Found session end without a start: ${line}`);
+      } else if (damageMatch && sessionStartTime) {
+        const damageString = damageMatch[2].replace(/\s/g, '');
+        const damageAmount = parseInt(damageString, 10);
+        if (!isNaN(damageAmount)) {
+          currentSessionDamage += damageAmount;
+        }
       }
     });
 
     rl.on('close', () => {
-      // If the file ends and we still have an unmatched start time,
-      // we could optionally add it as an ongoing session, but for now,
-      // we only list completed sessions.
       resolve(sessions);
     });
 

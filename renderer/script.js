@@ -103,21 +103,44 @@ async function fetchSessionData() {
 }
 
 function updateSessionSummaryDisplay(sessions) {
-  if (!sessionSummaryContentElement) return;
+  const screenTitleElement = document.querySelector('#session-summary-screen h2');
+  if (!sessionSummaryContentElement || !screenTitleElement) return;
+  const totalDamageElement = document.getElementById('session-total-damage');
 
   if (!sessions || sessions.length === 0) {
-    sessionSummaryContentElement.innerHTML = '<p>No completed sessions found in this log file.</p>';
+    sessionSummaryContentElement.innerHTML = '<p>No completed sessions found.</p>';
+    if (totalDamageElement) totalDamageElement.textContent = '0';
+    if (screenTitleElement) screenTitleElement.textContent = 'Session Summary';
     return;
   }
 
-  let html = '<ul>';
-  sessions.forEach(session => {
-    // Assuming timestamps are in HH:MM:SS,ms format
-    html += `<li>Session: ${session.startTime.split(',')[0]} - ${session.endTime.split(',')[0]}</li>`;
-  });
-  html += '</ul>';
+  const lastSession = sessions[sessions.length - 1];
 
-  sessionSummaryContentElement.innerHTML = html;
+  // Function to format date (YYYY-MM-DD) and time (HH:MM:SS,ms) to DD-MM-HH:MM
+  const formatDateTime = (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return '??-??-??:??';
+    const dateParts = dateStr.split('-'); // [YYYY, MM, DD]
+    const timeParts = timeStr.split(':'); // [HH, MM, SS,ms]
+    if (dateParts.length < 3 || timeParts.length < 2) return '??-??-??:??';
+    const day = dateParts[2];
+    const month = dateParts[1];
+    const hour = timeParts[0];
+    const minute = timeParts[1];
+    return `${day}-${month}-${hour}:${minute}`;
+  };
+
+  const startTimeFormatted = formatDateTime(lastSession.startDate, lastSession.startTime);
+  const endTimeFormatted = formatDateTime(lastSession.endDate, lastSession.endTime);
+  const totalDamage = lastSession.totalDamage || 0;
+
+  screenTitleElement.textContent = `Last session: ${startTimeFormatted} - ${endTimeFormatted}`;
+
+  // Update content area (optional - could show duration or keep empty)
+  sessionSummaryContentElement.innerHTML = `<ul><li>Session processed: ${startTimeFormatted} to ${endTimeFormatted}</li></ul>`;
+
+  if (totalDamageElement) {
+    totalDamageElement.textContent = totalDamage.toLocaleString();
+  }
 }
 
 async function fetchLogContent() {
