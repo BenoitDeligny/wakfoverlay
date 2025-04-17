@@ -126,7 +126,7 @@ function updateSessionSummaryDisplay(sessions) {
     const month = dateParts[1];
     const hour = timeParts[0];
     const minute = timeParts[1];
-    return `${day}-${month}-${hour}:${minute}`;
+    return `${day}/${month} at ${hour}:${minute}`;
   };
 
   const startTimeFormatted = formatDateTime(lastSession.startDate, lastSession.startTime);
