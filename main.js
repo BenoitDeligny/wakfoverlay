@@ -253,24 +253,21 @@ async function analyzeSessionData(filePath) {
   const startRegex = /^\s*INFO\s+([\d:,\.]+)\s+\[Net-Cnx-wakfu-(?!dispatcher).*\.ankama-games\.com:.*>0\]\s+\(.*\)\s+-\s+onNewConnection ChannelHandlerContext/;
   const endRegex = /^\s*INFO\s+([\d:,\.]+)\s+\[AWT-EventQueue-0\]\s+\(.*\)\s+-\s+Sending DisconnectionMessage to Servers\. Reason : {UI Closed}\s*$/;
   const damageRegex = /\[Information \(jeu\)\]\s+(.+?):\s+-([\d\s]+)\s+PV\s+(\(.+\))/;
-  const timeRegex = /^\s*INFO\s+([\d:,\.]+)\s+.*/; // General regex to capture timestamp
+  const timeRegex = /^\s*INFO\s+([\d:,\.]+)\s+.*/;
 
   try {
     await fs.access(filePath);
   } catch (error) {
-    console.error('Error accessing log file for session data:', error);
     return [];
   }
 
-  // Get initial date from file modification time
-  let currentDate = new Date(); // Default to now if stat fails
+  let currentDate = new Date();
   try {
       currentDate = fsSync.statSync(filePath).mtime;
   } catch (statError) {
-      console.error('Error getting file stats, using current date as fallback:', statError);
   }
 
-  let lastTime = '00:00:00,000'; // Keep track of the last seen time to detect day rollover
+  let lastTime = '00:00:00,000';
 
   const fileStream = fsSync.createReadStream(filePath);
   const rl = readline.createInterface({
@@ -278,7 +275,6 @@ async function analyzeSessionData(filePath) {
     crlfDelay: Infinity,
   });
 
-  // Helper to format Date object to YYYY-MM-DD
   const formatDate = (date) => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -286,9 +282,7 @@ async function analyzeSessionData(filePath) {
     return `${y}-${m}-${d}`;
   };
 
-  // Helper to compare time strings (HH:MM:SS,ms)
   const isTimeEarlier = (time1, time2) => {
-      // Simple string comparison works for HH:MM:SS format
       return time1 < time2;
   };
 
@@ -299,9 +293,8 @@ async function analyzeSessionData(filePath) {
 
       if (timeMatch) {
         currentTimeString = timeMatch[1].trim();
-        // Check for day rollover
         if (isTimeEarlier(currentTimeString, lastTime)) {
-          currentDate.setDate(currentDate.getDate() + 1); // Increment the date
+          currentDate.setDate(currentDate.getDate() + 1);
         }
         lastTime = currentTimeString;
       }
@@ -314,7 +307,7 @@ async function analyzeSessionData(filePath) {
         sessionStartDate = formatDate(currentDate);
         sessionStartTime = startMatch[1].trim();
         currentSessionDamage = 0;
-      } else if (endMatch && sessionStartTime) { // Use sessionStartTime as the flag for an active session
+      } else if (endMatch && sessionStartTime) {
         const sessionEndDate = formatDate(currentDate);
         const sessionEndTime = endMatch[1].trim();
         sessions.push({
@@ -327,8 +320,6 @@ async function analyzeSessionData(filePath) {
         sessionStartDate = null;
         sessionStartTime = null;
         currentSessionDamage = 0;
-      } else if (endMatch && !sessionStartTime) {
-        console.warn(`Found session end without a start: ${line}`);
       } else if (damageMatch && sessionStartTime) {
         const damageString = damageMatch[2].replace(/\s/g, '');
         const damageAmount = parseInt(damageString, 10);
@@ -343,12 +334,10 @@ async function analyzeSessionData(filePath) {
     });
 
     rl.on('error', (err) => {
-      console.error('Error reading log file for session data:', err);
       reject(err);
     });
 
     fileStream.on('error', (err) => {
-      console.error('Error reading log file stream for session data:', err);
       reject(err);
     });
   });

@@ -34,16 +34,9 @@ if (selectFileBtn) {
 }
 
 if (alwaysOnTopCheckbox) {
-  // Set initial state based on a potential stored preference (optional)
-  // const isAlwaysOnTop = localStorage.getItem('alwaysOnTop') === 'true';
-  // alwaysOnTopCheckbox.checked = isAlwaysOnTop;
-  // window.electronAPI.toggleAlwaysOnTop(isAlwaysOnTop);
-
   alwaysOnTopCheckbox.addEventListener('change', (event) => {
     const isChecked = event.target.checked;
     window.electronAPI.toggleAlwaysOnTop(isChecked);
-    // Store preference (optional)
-    // localStorage.setItem('alwaysOnTop', isChecked);
   });
 }
 
@@ -94,11 +87,6 @@ async function fetchSessionData() {
   } catch (error) {
     if (sessionSummaryContentElement) sessionSummaryContentElement.innerHTML = `<p>Error loading session data: ${error.message}</p>`;
     console.error('Error fetching session data:', error);
-    // Optionally stop polling if session data fails
-    // if (pollInterval) {
-    //   clearInterval(pollInterval);
-    //   pollInterval = null;
-    // }
   }
 }
 
@@ -116,11 +104,10 @@ function updateSessionSummaryDisplay(sessions) {
 
   const lastSession = sessions[sessions.length - 1];
 
-  // Function to format date (YYYY-MM-DD) and time (HH:MM:SS,ms) to DD-MM-HH:MM
   const formatDateTime = (dateStr, timeStr) => {
     if (!dateStr || !timeStr) return '??-??-??:??';
-    const dateParts = dateStr.split('-'); // [YYYY, MM, DD]
-    const timeParts = timeStr.split(':'); // [HH, MM, SS,ms]
+    const dateParts = dateStr.split('-');
+    const timeParts = timeStr.split(':');
     if (dateParts.length < 3 || timeParts.length < 2) return '??-??-??:??';
     const day = dateParts[2];
     const month = dateParts[1];
@@ -135,7 +122,6 @@ function updateSessionSummaryDisplay(sessions) {
 
   screenTitleElement.textContent = `Last session: ${startTimeFormatted} - ${endTimeFormatted}`;
 
-  // Update content area (optional - could show duration or keep empty)
   sessionSummaryContentElement.innerHTML = `<ul><li>Session processed: ${startTimeFormatted} to ${endTimeFormatted}</li></ul>`;
 
   if (totalDamageElement) {
@@ -149,7 +135,6 @@ async function fetchLogContent() {
     const fightData = await window.electronAPI.getFightIds(selectedFilePath);
     updateFightDisplays(fightData);
 
-    // Fetch session data as well
     fetchSessionData(); 
 
     const currentLogContent = await window.electronAPI.readFileContent(selectedFilePath);
@@ -176,7 +161,7 @@ window.electronAPI.onLoadFile(async (filePath) => {
         const initialContent = await window.electronAPI.readFileContent(selectedFilePath);
         updateLogScreen(initialContent);
         startPolling();
-        fetchSessionData(); // Also fetch session data on initial load
+        fetchSessionData();
     } catch (error) {
         updateLogScreen(`Error reading initial file: ${error.message}`);
         if (pollInterval) clearInterval(pollInterval);
@@ -191,8 +176,7 @@ function updateLogScreen(logData) {
   }
 }
 
-// Screen Navigation Logic
-document.addEventListener('DOMContentLoaded', () => { // Ensure DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
   const navigationContainer = document.querySelector('.navigation');
   const screens = document.querySelectorAll('.screen');
   const navButtons = document.querySelectorAll('.nav-button');
@@ -202,11 +186,9 @@ document.addEventListener('DOMContentLoaded', () => { // Ensure DOM is fully loa
       if (event.target.matches('.nav-button')) {
         const targetScreenId = event.target.dataset.target;
 
-        // Deactivate current screen and button
         screens.forEach(screen => screen.classList.remove('active'));
         navButtons.forEach(button => button.classList.remove('active'));
 
-        // Activate new screen and button
         const targetScreen = document.getElementById(targetScreenId);
         if (targetScreen) {
           targetScreen.classList.add('active');
