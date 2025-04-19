@@ -7,23 +7,35 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="title-bar">
-    <div id="close-btn"></div>
-    <h1>WAKFU OVERLAY FOR FIGHT</h1>
-    <button id="select-file-btn">Select Test File</button>
-    <label class="toggle-switch">
-      <input type="checkbox" id="always-on-top-checkbox">
-      <span class="slider round"></span>
-    </label>
-    <span class="toggle-label">Force in front</span>
+  <!-- Container for top controls -->
+  <div class="top-controls">
+    <div id="menu-btn">☰</div> <!-- Menu icon now on the left -->
+    <!-- Toggle switch removed, will be in menu -->
+    <!-- <span class="toggle-label">Always on Top</span> -->
+    <div id="close-btn"></div> <!-- Close button remains on the right -->
   </div>
-  <div class="separator"></div>
 
-  <div class="navigation">
-    <button id="nav-current-fight" class="nav-button active" data-target="fight-screen">Current Fight</button>
-    <button id="nav-last-fight" class="nav-button" data-target="last-fight-screen">Last Fight</button>
-    <button id="nav-session-summary" class="nav-button" data-target="session-summary-screen">Session Summary</button>
+  <!-- Popup Menu (hidden by default) -->
+  <div id="menu-popup" class="hidden">
+    <div class="menu-section">
+      <a href="#" class="menu-nav-link active" data-target="fight-screen">Current Fight</a>
+      <a href="#" class="menu-nav-link" data-target="last-fight-screen">Last Fight</a>
+      <a href="#" class="menu-nav-link" data-target="session-summary-screen">Session Summary</a>
+    </div>
+    <div class="menu-separator"></div>
+    <div class="menu-section menu-toggle-section">
+      <label class="toggle-switch">
+        <input type="checkbox" id="always-on-top-checkbox">
+        <span class="slider round"></span>
+      </label>
+      <span class="toggle-label">Always on Top</span>
+    </div>
   </div>
+
+  <!-- Separator kept for now, can remove via CSS if needed -->
+  <div class="separator"></div> 
+
+  <!-- Navigation div removed -->
   
   <div id="fight-screen" class="screen active">
     <h2>Current Fight</h2>

@@ -1,7 +1,19 @@
+/* Global Reset & Body Styling */
+html, body {
+  padding: 0;
+  margin: 0;
+  height: 100vh;
+  overflow: hidden; 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 body {
-  background-color: transparent;
-  color: white; 
-  font-family: sans-serif;
+  background-color: rgba(25, 25, 35, 0.92); /* Darker purple/blue base */
+  color: rgba(230, 230, 240, 0.9); /* Light base text */
+  display: flex;
+  flex-direction: column;
+  height: 100%; 
+  -webkit-app-region: drag; 
 }
 
 #title-bar {
@@ -11,31 +23,103 @@ body {
 }
 
 #content-area {
-  -webkit-app-region: no-drag;
   padding: 10px 20px 20px 20px;
 }
 
-.separator {
-  height: 1px;
-  background-color: rgba(255, 255, 255, 0.3);
-  margin: 0 20px;
-  -webkit-app-region: no-drag;
+/* Container for top controls */
+.top-controls {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  padding: 6px 8px; 
+  flex-shrink: 0;
+  /* Container is draggable */
 }
 
-h1 {
-  font-size: 1.5em;
-  margin: 0;
-  padding: 0;
-}
-
-#close-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 20px;
-  height: 20px;
+/* Menu Button */
+#menu-btn {
+  padding: 2px 6px;
   cursor: pointer;
+  font-size: 1.3em; 
+  line-height: 1;
+  color: rgba(200, 220, 255, 0.7); /* Lighter icon color */
+  border-radius: 3px;
+  transition: background-color 0.2s, color 0.2s;
+  -webkit-app-region: no-drag; 
+}
+
+#menu-btn:hover {
+  background-color: rgba(0, 200, 255, 0.15); /* Cyan hover */
+  color: #0af; /* Bright cyan */
+}
+
+/* Popup Menu */
+#menu-popup {
+  position: absolute;
+  top: 38px; 
+  left: 8px; 
+  background-color: rgba(35, 35, 50, 0.98); /* Dark popup */
+  border: 1px solid rgba(170, 180, 255, 0.15);
+  border-radius: 4px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  padding: 5px 0; 
+  min-width: 160px; 
   -webkit-app-region: no-drag;
+}
+
+#menu-popup.hidden {
+  display: none;
+}
+
+.menu-section {
+  padding: 5px 15px; 
+}
+
+.menu-nav-link {
+  display: block;
+  padding: 7px 0; 
+  color: rgba(220, 220, 230, 0.85); /* Light link text */
+  text-decoration: none;
+  font-size: 0.95em; 
+  border-radius: 3px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.menu-nav-link:hover {
+  background-color: rgba(0, 255, 150, 0.1); /* Lime hover */
+  color: #0f8; /* Bright lime */
+}
+
+.menu-nav-link.active {
+  color: #f0f; /* Bright Pink for active view */
+  font-weight: bold;
+}
+
+.menu-separator {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 5px 0;
+}
+
+.menu-toggle-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+}
+
+.menu-toggle-section .toggle-label {
+  color: rgba(220, 220, 230, 0.85); /* Match link color */
+  font-size: 0.95em; /* Match link size */
+}
+
+/* Close Button */
+#close-btn {
+  width: 16px; /* Make it slightly smaller */
+  height: 16px;
+  cursor: pointer;
+  position: relative;
+  -webkit-app-region: no-drag; 
 }
 
 #close-btn::before,
@@ -46,101 +130,189 @@ h1 {
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: white;
+  background-color: rgba(200, 220, 255, 0.7); /* Adjusted color slightly */
+  transition: background-color 0.2s;
 }
 
 #close-btn::before {
-  transform: translateY(-50%) rotate(45deg);
+  transform: translateY(-50%) rotate(45deg); /* Restore rotation */
 }
 
 #close-btn::after {
-  transform: translateY(-50%) rotate(-45deg);
+  transform: translateY(-50%) rotate(-45deg); /* Restore rotation */
 }
 
-#select-file-btn {
-  -webkit-app-region: no-drag;
+#close-btn:hover::before,
+#close-btn:hover::after {
+  background-color: #f5f5ff; 
 }
 
-#logContent {
-  background-color: rgba(0, 0, 0);
-  color: #7907d6;
-  max-height: 200px; 
-  overflow-y: auto; 
-  padding: 10px;
-  margin-top: 10px; 
-  border-radius: 4px;
-  white-space: pre-wrap; 
-  word-break: break-all; 
+/* Always on Top Toggle */
+.toggle-label {
+  margin-left: 8px; 
+  font-size: 0.9em; 
+  color: rgba(220, 220, 230, 0.8); 
+  cursor: default; 
+  user-select: none; 
 }
 
-#fight-screen h2, #last-fight-screen h2, #session-summary-screen h2 {
-  margin-bottom: 10px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-  font-size: 1.2em;
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 34px; 
+  height: 18px;
+  vertical-align: middle;
 }
 
-#fight-screen, #last-fight-screen, #session-summary-screen {
-  border: 1px solid rgba(255, 255, 255, 0.8);
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.15); /* Light gray background */
+  transition: .3s;
+  border-radius: 18px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px; 
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: rgba(220, 220, 230, 0.7); /* Light gray knob */
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* Stronger shadow */
+}
+
+input:checked + .slider {
+  background-color: #f0f; /* Pink when active */
+}
+
+input:checked + .slider:before {
+  transform: translateX(16px);
+  background-color: white;
+}
+
+/* Separator */
+.separator {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0;
+  flex-shrink: 0; 
+}
+
+/* Screen Container Styling */
+.screen {
+  display: none; 
+  flex-grow: 1; 
   padding: 15px;
-  margin-top: 10px;
-  max-height: 400px;
-  border-radius: 5px;
-  background-color: rgba(40, 20, 60, 0.85);
+  overflow: hidden; 
+  flex-direction: column;
 }
 
+.screen.active {
+  display: flex; 
+}
+
+.screen h2 {
+  margin: 0 0 10px 0;
+  padding-bottom: 8px; 
+  font-size: 1.2em; /* Larger title */
+  color: #0ff; /* Bright Cyan title */
+  text-align: center;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.25); /* Cyan underline */
+  flex-shrink: 0;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.3); /* Subtle glow */
+}
+
+/* Content Scrolling Area */
 #fight-content, #last-fight-content, #session-summary-content {
   flex-grow: 1;
-  overflow-y: auto;
-  font-family: monospace;
+  overflow-y: auto; 
+  padding-right: 10px; /* More space for scrollbar */
   margin-bottom: 10px;
-  padding-right: 5px;
+  font-family: 'Segoe UI', Tahoma, sans-serif; /* Switch back from monospace */
+  font-size: 1em; /* Baseline size */
+  -webkit-app-region: no-drag; 
 }
 
+/* Fighter & Spell List Styling - Readability Enhancements */
+.fighter-row {
+  padding: 9px 7px; 
+  margin-bottom: 6px; 
+  background-color: rgba(255, 255, 255, 0.05); /* Slightly more visible background */
+  border-radius: 4px;
+  font-size: 1.1em; 
+  /* Removed color here, apply to children */
+  display: flex; 
+  justify-content: space-between;
+  align-items: center; 
+  border-left: 3px solid rgba(0, 255, 150, 0.4); /* Slightly more visible border */
+}
+
+.fighter-name {
+  margin-right: 10px; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; 
+  font-weight: 500; 
+  color: #e0e0ff; /* Explicit light color for name */
+  font-size: 1.05em; /* Increase name size slightly */
+}
+
+.fighter-damage {
+  font-weight: 700; 
+  font-size: 1.2em; 
+  color: #ff0; /* Bright Yellow */
+  margin-left: 5px; 
+  text-shadow: 
+    0 0 4px rgba(255, 255, 0, 0.4), /* Yellow glow */
+    1px 1px 1px rgba(0, 0, 0, 0.5); /* Subtle dark shadow for contrast */
+}
+
+.spell-breakdown, .spell-row {
+  display: none; 
+}
+
+/* Total Damage Area */
 #fight-total, #last-fight-total, #session-summary-total {
-  font-weight: bold;
-  font-family: monospace;
-  padding-top: 5px;
-  font-size: 1.1em;
-  color: rgba(255, 255, 255, 0.9);
+  padding: 12px 10px; /* More padding */
+  margin-top: 8px; 
+  border-top: 1px solid rgba(255, 255, 255, 0.15); 
+  text-align: right;
+  font-size: 1.1em; 
+  color: rgba(230, 230, 240, 0.9);
+  font-weight: 600; 
+  flex-shrink: 0;
 }
 
-#fight-total .damage-total {
-  font-size: 1.6em;
-  margin-top: 10px;
-  padding: 8px;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 4px;
-  box-shadow: 0 0 8px rgba(255, 204, 0, 0.3);
-  font-weight: bold;
-  text-transform: uppercase;
+#current-fight-total-damage,
+#last-fight-total-damage,
+#session-total-damage {
+  font-size: 1.4em; /* Larger total */
+  color: #f0f; /* Pink total damage */
+  margin-left: 10px; 
+  text-shadow: 0 0 6px rgba(255, 0, 255, 0.5); /* Pink glow */
 }
 
-.damage-total {
-  font-size: 1.2em;
-  margin-top: 5px;
-  text-align: center;
-  color: #ffcc00;
-  text-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
-  letter-spacing: 1px;
-}
-
-#last-fight-total .damage-total {
-  font-size: 1.6em;
-  margin-top: 10px;
-  padding: 8px;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 4px;
-  box-shadow: 0 0 8px rgba(255, 204, 0, 0.3);
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
+/* Other styles */
 .no-data {
   text-align: center;
   font-style: italic;
-  color: rgba(255, 255, 255, 0.6);
-  padding: 15px;
+  color: rgba(200, 200, 210, 0.6); /* Lighter placeholder text */
+  padding: 25px 15px;
+  font-size: 1em;
 }
 
 .fight-header {
@@ -156,29 +328,6 @@ h1 {
   height: 1px;
   background-color: rgba(255, 255, 255, 0.2);
   margin: 10px 0;
-}
-
-.fighter-row {
-  font-weight: bold;
-  font-size: 1.1em;
-  padding: 8px;
-  margin-top: 10px;
-  background-color: rgba(55, 27, 84, 0.7);
-  border-radius: 4px;
-  color: #ffcc00;
-}
-
-.spell-breakdown {
-  margin-left: 15px;
-  margin-bottom: 15px;
-  padding: 5px;
-  border-left: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.spell-row {
-  font-size: 0.9em;
-  padding: 4px 8px;
-  color: rgba(255, 255, 255, 0.9);
 }
 
 .spell-row:hover {
@@ -198,97 +347,4 @@ h1 {
   .spell-breakdown {
     margin-left: 10px;
   }
-}
-
-.toggle-switch {
-  -webkit-app-region: no-drag;
-  position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 20px;
-  margin-left: 15px;
-  vertical-align: middle;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 20px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #7907d6;
-}
-
-input:checked + .slider:before {
-  transform: translateX(20px);
-}
-
-.toggle-label {
-  -webkit-app-region: no-drag;
-  margin-left: 8px;
-  vertical-align: middle;
-  font-size: 0.9em;
-}
-
-.screen {
-  display: none;
-}
-
-.screen.active {
-  display: flex;
-  flex-direction: column;
-}
-
-.navigation {
-  padding: 10px 20px 10px 20px;
-  -webkit-app-region: no-drag;
-  background-color: rgba(30, 15, 45, 1);
-}
-
-.nav-button {
-  padding: 8px 15px;
-  margin-right: 10px;
-  background-color: rgba(80, 60, 100, 1);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s, border-color 0.3s;
-  box-shadow: 0 0 0 1px rgba(80, 60, 100, 1);
-}
-
-.nav-button:hover {
-  background-color: rgba(134, 134, 134, 0.6);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.nav-button.active {
-  background-color: rgba(40, 20, 60, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  font-weight: bold;
 }

@@ -6,6 +6,11 @@ const lastFightTotalDamageElement = document.getElementById('last-fight-total-da
 const currentFightersListElement = document.getElementById('current-fighters-list');
 const lastFightersListElement = document.getElementById('last-fighters-list');
 const alwaysOnTopCheckbox = document.getElementById('always-on-top-checkbox');
+const menuBtn = document.getElementById('menu-btn');
+const menuPopup = document.getElementById('menu-popup');
+const menuNavLinks = document.querySelectorAll('.menu-nav-link');
+const sessionTotalDamageElem = document.getElementById('session-total-damage');
+const sessionFightersList = document.getElementById('session-fighters-list');
 
 let selectedFilePath = null;
 let pollInterval = null;
@@ -169,24 +174,178 @@ function updateLogScreen(logData) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const navigationContainer = document.querySelector('.navigation');
+  const alwaysOnTopCheckbox = document.getElementById('always-on-top-checkbox');
+  const closeBtn = document.getElementById('close-btn');
+  const menuBtn = document.getElementById('menu-btn');
+  const menuPopup = document.getElementById('menu-popup');
+  const menuNavLinks = document.querySelectorAll('.menu-nav-link');
   const screens = document.querySelectorAll('.screen');
-  const navButtons = document.querySelectorAll('.nav-button');
+  const currentFightTotalDamageElem = document.getElementById('current-fight-total-damage');
+  const lastFightTotalDamageElem = document.getElementById('last-fight-total-damage');
+  const sessionTotalDamageElem = document.getElementById('session-total-damage');
+  const currentFightersList = document.getElementById('current-fighters-list');
+  const lastFightersList = document.getElementById('last-fighters-list');
+  const sessionFightersList = document.getElementById('session-fighters-list');
 
-  if (navigationContainer) {
-    navigationContainer.addEventListener('click', (event) => {
-      if (event.target.matches('.nav-button')) {
-        const targetScreenId = event.target.dataset.target;
+  let currentFilePath = null;
+  let intervalId = null;
 
-        screens.forEach(screen => screen.classList.remove('active'));
-        navButtons.forEach(button => button.classList.remove('active'));
+  // --- Menu Logic --- 
+  menuBtn.addEventListener('click', (event) => {
+    event.stopPropagation(); // Prevent click from immediately closing menu
+    menuPopup.classList.toggle('hidden');
+  });
 
-        const targetScreen = document.getElementById(targetScreenId);
-        if (targetScreen) {
-          targetScreen.classList.add('active');
-        }
-        event.target.classList.add('active');
-      }
+  document.addEventListener('click', (event) => {
+    if (!menuPopup.classList.contains('hidden') && !menuPopup.contains(event.target)) {
+      menuPopup.classList.add('hidden');
+    }
+  });
+
+  menuPopup.addEventListener('click', (event) => {
+    // Close menu if a nav link is clicked
+    if (event.target.classList.contains('menu-nav-link')) {
+      menuPopup.classList.add('hidden');
+    }
+  });
+  // --- End Menu Logic ---
+
+  // --- Navigation Logic --- 
+  function showScreen(targetId) {
+    screens.forEach(screen => {
+      screen.classList.remove('active');
     });
+    menuNavLinks.forEach(link => {
+      link.classList.remove('active');
+    });
+
+    const targetScreen = document.getElementById(targetId);
+    if (targetScreen) {
+      targetScreen.classList.add('active');
+    }
+    const targetLink = document.querySelector(`.menu-nav-link[data-target="${targetId}"]`);
+    if (targetLink) {
+      targetLink.classList.add('active');
+    }
   }
+
+  menuNavLinks.forEach(link => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const targetId = link.getAttribute('data-target');
+      showScreen(targetId);
+    });
+  });
+
+  // Show default screen
+  showScreen('fight-screen');
+  // --- End Navigation Logic ---
+
+  // --- Window Controls ---
+  closeBtn.addEventListener('click', () => {
+    window.electronAPI.closeWindow();
+  });
+
+  alwaysOnTopCheckbox.addEventListener('change', () => {
+    window.electronAPI.toggleAlwaysOnTop(alwaysOnTopCheckbox.checked);
+  });
+  // --- End Window Controls ---
+
+  // --- File Handling and Data Update --- 
+  const formatDamage = (damage) => {
+      return damage.toLocaleString('en-US');
+  };
+
+  const updateFighterList = (listElement, fighters, fightType) => {
+    if (!listElement) return;
+    listElement.innerHTML = ''; 
+
+    if (!fighters || fighters.length === 0) {
+      listElement.innerHTML = '<div class="no-data">No fighter data available.</div>';
+      return;
+    }
+
+    // Sort fighters by damage dealt, descending
+    const sortedFighters = fighters.filter(f => !f.isAI && f.damageDealt > 0)
+                                  .sort((a, b) => b.damageDealt - a.damageDealt);
+
+    if (sortedFighters.length === 0) {
+        listElement.innerHTML = '<div class="no-data">No damage dealt by players.</div>';
+        return;
+    }
+
+    sortedFighters.forEach(fighter => {
+      const fighterDiv = document.createElement('div');
+      fighterDiv.className = 'fighter-row';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'fighter-name';
+      nameSpan.textContent = fighter.name;
+
+      const damageSpan = document.createElement('span');
+      damageSpan.className = 'fighter-damage';
+      damageSpan.textContent = formatDamage(fighter.damageDealt);
+
+      fighterDiv.appendChild(nameSpan);
+      fighterDiv.appendChild(damageSpan);
+      listElement.appendChild(fighterDiv);
+    });
+  };
+
+  async function updateFightData() {
+    if (!currentFilePath) return;
+    try {
+      const data = await window.electronAPI.getFightData(currentFilePath);
+
+      // Update Current Fight
+      if (currentFightTotalDamageElem) {
+          currentFightTotalDamageElem.textContent = formatDamage(data.currentFightTotalDamage || 0);
+      }
+      updateFighterList(currentFightersList, data.currentFightFighters, 'current');
+
+      // Update Last Completed Fight
+      if (lastFightTotalDamageElem) {
+          lastFightTotalDamageElem.textContent = formatDamage(data.lastCompletedFightTotalDamage || 0);
+      }
+      updateFighterList(lastFightersList, data.lastCompletedFightFighters, 'last');
+      
+      // Update Session Summary
+      if (sessionTotalDamageElem) {
+          sessionTotalDamageElem.textContent = formatDamage(data.sessionInfo?.totalDamage || 0);
+      }
+      updateFighterList(sessionFightersList, data.sessionFighters, 'session');
+
+    } catch (error) {
+      console.error('Failed to update fight data:', error);
+      // Optionally display an error to the user
+      if (currentFightersList) currentFightersList.innerHTML = `<div class="no-data error">Error loading data: ${error.message}</div>`;
+      if (lastFightersList) lastFightersList.innerHTML = '';
+      if (sessionFightersList) sessionFightersList.innerHTML = '';
+      if (currentFightTotalDamageElem) currentFightTotalDamageElem.textContent = 'Error';
+      if (lastFightTotalDamageElem) lastFightTotalDamageElem.textContent = 'Error';
+      if (sessionTotalDamageElem) sessionTotalDamageElem.textContent = 'Error';
+      stopAutoUpdate(); // Stop polling if there's an error
+    }
+  }
+
+  function startAutoUpdate() {
+    stopAutoUpdate(); // Clear existing interval if any
+    if (currentFilePath) {
+      updateFightData(); // Initial update
+      intervalId = setInterval(updateFightData, 2000); // Update every 2 seconds
+    }
+  }
+
+  function stopAutoUpdate() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
+  window.electronAPI.onLoadFile((filePath) => {
+    currentFilePath = filePath;
+    startAutoUpdate();
+  });
+
 });

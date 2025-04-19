@@ -349,8 +349,8 @@ let mainWindow;
 
 function createWindow () {
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 550,
+    width: 300,
+    height: 760,
     transparent: true, 
     frame: false, 
     webPreferences: {
