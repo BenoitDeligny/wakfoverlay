@@ -6,7 +6,6 @@ const lastFightTotalDamageElement = document.getElementById('last-fight-total-da
 const currentFightersListElement = document.getElementById('current-fighters-list');
 const lastFightersListElement = document.getElementById('last-fighters-list');
 const alwaysOnTopCheckbox = document.getElementById('always-on-top-checkbox');
-const sessionSummaryContentElement = document.getElementById('session-summary-content');
 
 let selectedFilePath = null;
 let pollInterval = null;
@@ -79,50 +78,47 @@ function updateFightDisplays(fightData) {
   }
 }
 
-async function fetchSessionData() {
-  if (!selectedFilePath) return;
-  try {
-    const sessionData = await window.electronAPI.getSessionData(selectedFilePath);
-    updateSessionSummaryDisplay(sessionData);
-  } catch (error) {
-    if (sessionSummaryContentElement) sessionSummaryContentElement.innerHTML = `<p>Error loading session data: ${error.message}</p>`;
-    console.error('Error fetching session data:', error);
-  }
-}
-
-function updateSessionSummaryDisplay(sessions) {
+function updateSessionSummaryDisplay(sessionData) {
   const screenTitleElement = document.querySelector('#session-summary-screen h2');
-  if (!sessionSummaryContentElement || !screenTitleElement) return;
+  const sessionSummaryScreen = document.getElementById('session-summary-screen');
+  if (!sessionSummaryScreen || !screenTitleElement) return;
+  
   const totalDamageElement = document.getElementById('session-total-damage');
+  const fightersListElement = document.getElementById('session-fighters-list');
 
-  if (!sessions || sessions.length === 0) {
-    sessionSummaryContentElement.innerHTML = '<p>No completed sessions found.</p>';
+  const sessionInfo = sessionData.sessionInfo || { startTime: null, totalDamage: 0 }; 
+  const sessionFighters = sessionData.sessionFighters || [];
+  const totalDamage = sessionInfo.totalDamage || 0;
+
+  if (!sessionInfo.startTime) {
+    if (fightersListElement) fightersListElement.innerHTML = '<p>No active session detected.</p>';
     if (totalDamageElement) totalDamageElement.textContent = '0';
     if (screenTitleElement) screenTitleElement.textContent = 'Session Summary';
     return;
   }
 
-  const lastSession = sessions[sessions.length - 1];
-
   const formatDateTime = (dateStr, timeStr) => {
-    if (!dateStr || !timeStr) return '??-??-??:??';
+    if (!dateStr || !timeStr) return '??-?? ??:??';
     const dateParts = dateStr.split('-');
     const timeParts = timeStr.split(':');
-    if (dateParts.length < 3 || timeParts.length < 2) return '??-??-??:??';
+    if (dateParts.length < 3 || timeParts.length < 2) return '??-?? ??:??';
     const day = dateParts[2];
     const month = dateParts[1];
     const hour = timeParts[0];
     const minute = timeParts[1];
-    return `${day}/${month} at ${hour}:${minute}`;
+    return `${day}/${month} ${hour}:${minute}`;
   };
 
-  const startTimeFormatted = formatDateTime(lastSession.startDate, lastSession.startTime);
-  const endTimeFormatted = formatDateTime(lastSession.endDate, lastSession.endTime);
-  const totalDamage = lastSession.totalDamage || 0;
+  const startTimeFormatted = formatDateTime(sessionInfo.startDate, sessionInfo.startTime);
+  const endTimeFormatted = sessionInfo.endTime ? formatDateTime(sessionInfo.endDate, sessionInfo.endTime) : 'Ongoing';
 
-  screenTitleElement.textContent = `Last session: ${startTimeFormatted} - ${endTimeFormatted}`;
+  screenTitleElement.textContent = `Session: ${startTimeFormatted} - ${endTimeFormatted}`;
 
-  sessionSummaryContentElement.innerHTML = `<ul><li>Session processed: ${startTimeFormatted} to ${endTimeFormatted}</li></ul>`;
+  if (fightersListElement) {
+    fightersListElement.innerHTML = createFighterListHTML(sessionFighters, totalDamage);
+  } else {
+      console.error("Could not find session fighters list element (#session-fighters-list).");
+  }
 
   if (totalDamageElement) {
     totalDamageElement.textContent = totalDamage.toLocaleString();
@@ -132,20 +128,34 @@ function updateSessionSummaryDisplay(sessions) {
 async function fetchLogContent() {
   if (!selectedFilePath) return;
   try {
-    const fightData = await window.electronAPI.getFightIds(selectedFilePath);
-    updateFightDisplays(fightData);
+    const combinedData = await window.electronAPI.getFightIds(selectedFilePath);
+    
+    updateFightDisplays({
+        currentFightTotalDamage: combinedData.currentFightTotalDamage,
+        lastCompletedFightTotalDamage: combinedData.lastCompletedFightTotalDamage,
+        currentFightFighters: combinedData.currentFightFighters,
+        lastCompletedFightFighters: combinedData.lastCompletedFightFighters
+    });
 
-    fetchSessionData(); 
-
-    const currentLogContent = await window.electronAPI.readFileContent(selectedFilePath);
-    updateLogScreen(currentLogContent);
+    updateSessionSummaryDisplay({
+        sessionInfo: combinedData.sessionInfo,
+        sessionFighters: combinedData.sessionFighters
+    }); 
 
   } catch (error) {
     if (currentFightTotalDamageElement) currentFightTotalDamageElement.textContent = 'Error';
     if (lastFightTotalDamageElement) lastFightTotalDamageElement.textContent = 'Error';
-    if (currentFightersListElement) currentFightersListElement.innerHTML = '<p>Error loading data.</p>';
-    if (lastFightersListElement) lastFightersListElement.innerHTML = '<p>Error loading data.</p>';
-    updateLogScreen(`Error fetching data: ${error.message}`);
+    if (currentFightersListElement) currentFightersListElement.innerHTML = '<p>Error loading fight data.</p>';
+    if (lastFightersListElement) lastFightersListElement.innerHTML = '<p>Error loading fight data.</p>';
+    
+    const screenTitleElement = document.querySelector('#session-summary-screen h2');
+    const totalDamageElement = document.getElementById('session-total-damage');
+    const fightersListElement = document.getElementById('session-fighters-list');
+    if(screenTitleElement) screenTitleElement.textContent = 'Session Summary - Error';
+    if(totalDamageElement) totalDamageElement.textContent = 'Error';
+    if(fightersListElement) fightersListElement.innerHTML = `<p>Error loading session data: ${error.message}</p>`;
+    
+    console.error('Error fetching combined data:', error);
 
     if (pollInterval) {
       clearInterval(pollInterval);
@@ -158,12 +168,9 @@ window.electronAPI.onLoadFile(async (filePath) => {
   if (filePath) {
     selectedFilePath = filePath;
     try {
-        const initialContent = await window.electronAPI.readFileContent(selectedFilePath);
-        updateLogScreen(initialContent);
         startPolling();
-        fetchSessionData();
     } catch (error) {
-        updateLogScreen(`Error reading initial file: ${error.message}`);
+        updateLogScreen(`Error processing initial file load: ${error.message}`);
         if (pollInterval) clearInterval(pollInterval);
     }
   }

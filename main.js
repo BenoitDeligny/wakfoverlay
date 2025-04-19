@@ -7,6 +7,31 @@ const readline = require('readline');
 const userDataPath = app.getPath('userData');
 const configPath = path.join(userDataPath, 'config.json');
 
+// Global state for the current session
+let currentSessionFighterDamage = {};
+let currentSessionInfo = {
+  startDate: null,
+  startTime: null,
+  endDate: null,
+  endTime: null,
+  totalDamage: 0
+};
+let fileLastProcessedDate = null; // To handle date changes across log lines
+
+// Helper function to format date (moved here for broader use)
+const formatDate = (date) => {
+  if (!date) return null;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+// Helper function to check time order (moved here for broader use)
+const isTimeEarlier = (time1, time2) => {
+    return time1 < time2;
+};
+
 async function analyzeLogFile(filePath) {
   let lastCompletedFight = { id: null, totalDamage: 0, fighters: [] };
   let currentFight = { id: null, startTime: null, totalDamage: 0, fighters: [] };
@@ -28,6 +53,9 @@ async function analyzeLogFile(filePath) {
   });
 
   const regexPatterns = {
+    sessionStart: /^\s*INFO\s+([\d:,\.]+)\s+\[Net-Cnx-wakfu-(?!dispatcher).*\.ankama-games\.com:.*>0\]\s+\(.*\)\s+-\s+onNewConnection ChannelHandlerContext/,
+    sessionEnd: /^\s*INFO\s+([\d:,\.]+)\s+\[AWT-EventQueue-0\]\s+\(.*\)\s+-\s+Sending DisconnectionMessage to Servers\. Reason : {UI Closed}\s*$/,
+    timeMarker: /^\s*INFO\s+([\d:,\.]+)\s+.*/, // Generic line with timestamp
     fightStart: /^\s*INFO\s+([\d:,\.]+)\s+\[.*\]\s+\(.*\)\s+-\s+CREATION DU COMBAT\s*$/,
     fightEnd: /^\s*INFO\s+([\d:,\.]+)\s+\[.*\]\s+\(.*\)\s+-\s+\[FIGHT\] End fight with id (\d+)\s*$/,
     fighterJoin: /\[_FL_\]\s+fightId=(\d+)\s+(.+?)\s+breed\s+:\s+\d+\s+\[(-?\d+)\]\s+isControlledByAI=(true|false)/,
@@ -52,6 +80,7 @@ async function analyzeLogFile(filePath) {
   }
 
   function createEmptyFightData() {
+    // Also return empty session data structure initially
     return {
       lastCompletedFightId: null,
       lastCompletedFightTotalDamage: 0,
@@ -59,7 +88,9 @@ async function analyzeLogFile(filePath) {
       currentFightId: null,
       currentFightStartTime: null,
       currentFightTotalDamage: 0,
-      currentFightFighters: []
+      currentFightFighters: [],
+      sessionInfo: { ...currentSessionInfo }, // Return copy of current state
+      sessionFighters: [] // Initially empty
     };
   }
 
@@ -148,6 +179,10 @@ async function analyzeLogFile(filePath) {
     if (currentFight.id === activeFight.id) {
       currentFight.totalDamage = activeFight.totalDamage;
     }
+    // Increment session total damage if a session is active
+    if (currentSessionInfo.startTime) {
+        currentSessionInfo.totalDamage += damageAmount;
+    }
 
     let damageAttributed = false;
 
@@ -186,155 +221,123 @@ async function analyzeLogFile(filePath) {
       lastCompletedFight = { id: endedFightId, totalDamage: 0, fighters: [] };
     }
 
+    // Accumulate damage into session totals if session is active
+    if (currentSessionInfo.startTime && lastCompletedFight.fighters) {
+        lastCompletedFight.fighters.forEach(fighter => {
+            const name = fighter.name;
+            const damage = fighter.damageDealt || 0;
+            if (damage > 0) {
+                if (!currentSessionFighterDamage[name]) {
+                    currentSessionFighterDamage[name] = { name: name, damageDealt: 0 };
+                }
+                currentSessionFighterDamage[name].damageDealt += damage;
+            }
+        });
+    }
+
     activeFight = null;
     currentFight = { id: null, startTime: null, totalDamage: 0, fighters: [] };
     lastAttackerName = null;
   }
 
+  // Initialize date tracking for this analysis run
+  let currentDate = new Date();
+  try {
+      const stats = fsSync.statSync(filePath);
+      currentDate = stats.mtime;
+      // Use file mtime as the initial date if it's the first time processing or different from last time
+      if (!fileLastProcessedDate || fileLastProcessedDate.toDateString() !== currentDate.toDateString()) {
+          fileLastProcessedDate = new Date(currentDate); // Store the date component
+      }
+  } catch (statError) {
+      console.error("Error getting file stats, using current date:", statError);
+      fileLastProcessedDate = new Date(); // Fallback
+  }
+  let lastTimeString = '00:00:00,000';
+
   return new Promise((resolve, reject) => {
     rl.on('line', (line) => {
       lineNumber++;
-      const matches = {
-        startMatch: line.match(regexPatterns.fightStart),
-        endMatch: line.match(regexPatterns.fightEnd),
-        fighterMatch: line.match(regexPatterns.fighterJoin),
-        damageMatch: line.match(regexPatterns.damage),
-        spellCastMatch: line.match(regexPatterns.spellCast),
-        statusMatch: line.match(regexPatterns.status),
-        statusRemovalMatch: line.match(regexPatterns.statusRemoval)
-      };
 
-      if (matches.startMatch) {
-        handleFightStart(matches.startMatch);
-      } else if (matches.fighterMatch) {
-        handleFighterJoin(matches.fighterMatch);
-      } else if (matches.spellCastMatch && activeFight) {
-        lastAttackerName = matches.spellCastMatch[1].trim();
-      } else if (matches.statusMatch && activeFight) {
-        handleStatus(matches.statusMatch);
-      } else if (matches.damageMatch && activeFight) {
-        handleDamage(matches.damageMatch);
-      } else if (matches.endMatch) {
-        handleFightEnd(matches.endMatch);
+      // --- Date Tracking Logic ---
+      const timeMatch = line.match(regexPatterns.timeMarker);
+      let currentTimeString = null;
+      if (timeMatch) {
+        currentTimeString = timeMatch[1].trim();
+        // Check if time wrapped around (e.g., past midnight)
+        if (isTimeEarlier(currentTimeString, lastTimeString)) {
+          fileLastProcessedDate.setDate(fileLastProcessedDate.getDate() + 1); // Increment the date
+        }
+        lastTimeString = currentTimeString;
+      }
+      // --- End Date Tracking ---
+
+      const sessionStartMatch = line.match(regexPatterns.sessionStart);
+      const sessionEndMatch = line.match(regexPatterns.sessionEnd);
+      const fightStartMatch = line.match(regexPatterns.fightStart);
+      const fightEndMatch = line.match(regexPatterns.fightEnd);
+      const fighterMatch = line.match(regexPatterns.fighterJoin);
+      const damageMatch = line.match(regexPatterns.damage);
+      const spellCastMatch = line.match(regexPatterns.spellCast);
+      const statusMatch = line.match(regexPatterns.status);
+      // const statusRemovalMatch = line.match(regexPatterns.statusRemoval); // Not currently used
+
+      // Process session markers first
+      if (sessionStartMatch) {
+          currentSessionInfo.startDate = formatDate(fileLastProcessedDate);
+          currentSessionInfo.startTime = sessionStartMatch[1].trim();
+          currentSessionInfo.endDate = null; // Reset end date
+          currentSessionInfo.endTime = null;
+          currentSessionInfo.totalDamage = 0; // Reset session damage
+          currentSessionFighterDamage = {}; // Reset session fighters
+      } else if (sessionEndMatch && currentSessionInfo.startTime) {
+          currentSessionInfo.endDate = formatDate(fileLastProcessedDate);
+          currentSessionInfo.endTime = sessionEndMatch[1].trim();
+          // Optionally, could snapshot the session here if needed later
+          // Resetting happens on next sessionStart
+      }
+
+      // Process fight/damage markers only if within an active session or for general fight tracking
+      if (fightStartMatch) {
+        handleFightStart(fightStartMatch);
+      } else if (fighterMatch) {
+        handleFighterJoin(fighterMatch);
+      } else if (spellCastMatch && activeFight) {
+        lastAttackerName = spellCastMatch[1].trim();
+      } else if (statusMatch && activeFight) {
+        handleStatus(statusMatch);
+      } else if (damageMatch && activeFight) {
+        handleDamage(damageMatch);
+      } else if (fightEndMatch) {
+        handleFightEnd(fightEndMatch);
       }
     });
 
     rl.on('close', () => {
       const finalLastCompletedFighters = lastCompletedFight.fighters ? [...lastCompletedFight.fighters] : [];
       const finalCurrentFighters = currentFight.id && activeFight ? [...activeFight.fighters] : (currentFight.fighters || []);
+      // Sort session fighters by damage
+      const sortedSessionFighters = Object.values(currentSessionFighterDamage).sort((a, b) => b.damageDealt - a.damageDealt);
+
 
       resolve({
+        // Fight Data
         lastCompletedFightId: lastCompletedFight.id,
         lastCompletedFightTotalDamage: lastCompletedFight.totalDamage,
         lastCompletedFightFighters: finalLastCompletedFighters,
         currentFightId: currentFight.id,
         currentFightStartTime: currentFight.startTime,
         currentFightTotalDamage: currentFight.totalDamage,
-        currentFightFighters: finalCurrentFighters
+        currentFightFighters: finalCurrentFighters,
+        // Session Data
+        sessionInfo: { ...currentSessionInfo },
+        sessionFighters: sortedSessionFighters
       });
     });
 
     rl.on('error', (err) => {
-      reject(err);
-    });
-
-    fileStream.on('error', (err) => {
-      reject(err);
-    });
-  });
-}
-
-async function analyzeSessionData(filePath) {
-  const sessions = [];
-  let sessionStartDate = null;
-  let sessionStartTime = null;
-  let currentSessionDamage = 0;
-
-  const startRegex = /^\s*INFO\s+([\d:,\.]+)\s+\[Net-Cnx-wakfu-(?!dispatcher).*\.ankama-games\.com:.*>0\]\s+\(.*\)\s+-\s+onNewConnection ChannelHandlerContext/;
-  const endRegex = /^\s*INFO\s+([\d:,\.]+)\s+\[AWT-EventQueue-0\]\s+\(.*\)\s+-\s+Sending DisconnectionMessage to Servers\. Reason : {UI Closed}\s*$/;
-  const damageRegex = /\[Information \(jeu\)\]\s+(.+?):\s+-([\d\s]+)\s+PV\s+(\(.+\))/;
-  const timeRegex = /^\s*INFO\s+([\d:,\.]+)\s+.*/;
-
-  try {
-    await fs.access(filePath);
-  } catch (error) {
-    return [];
-  }
-
-  let currentDate = new Date();
-  try {
-      currentDate = fsSync.statSync(filePath).mtime;
-  } catch (statError) {
-  }
-
-  let lastTime = '00:00:00,000';
-
-  const fileStream = fsSync.createReadStream(filePath);
-  const rl = readline.createInterface({
-    input: fileStream,
-    crlfDelay: Infinity,
-  });
-
-  const formatDate = (date) => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  };
-
-  const isTimeEarlier = (time1, time2) => {
-      return time1 < time2;
-  };
-
-  return new Promise((resolve, reject) => {
-    rl.on('line', (line) => {
-      const timeMatch = line.match(timeRegex);
-      let currentTimeString = null;
-
-      if (timeMatch) {
-        currentTimeString = timeMatch[1].trim();
-        if (isTimeEarlier(currentTimeString, lastTime)) {
-          currentDate.setDate(currentDate.getDate() + 1);
-        }
-        lastTime = currentTimeString;
-      }
-
-      const startMatch = line.match(startRegex);
-      const endMatch = line.match(endRegex);
-      const damageMatch = line.match(damageRegex);
-
-      if (startMatch) {
-        sessionStartDate = formatDate(currentDate);
-        sessionStartTime = startMatch[1].trim();
-        currentSessionDamage = 0;
-      } else if (endMatch && sessionStartTime) {
-        const sessionEndDate = formatDate(currentDate);
-        const sessionEndTime = endMatch[1].trim();
-        sessions.push({
-          startDate: sessionStartDate,
-          startTime: sessionStartTime,
-          endDate: sessionEndDate,
-          endTime: sessionEndTime,
-          totalDamage: currentSessionDamage
-        });
-        sessionStartDate = null;
-        sessionStartTime = null;
-        currentSessionDamage = 0;
-      } else if (damageMatch && sessionStartTime) {
-        const damageString = damageMatch[2].replace(/\s/g, '');
-        const damageAmount = parseInt(damageString, 10);
-        if (!isNaN(damageAmount)) {
-          currentSessionDamage += damageAmount;
-        }
-      }
-    });
-
-    rl.on('close', () => {
-      resolve(sessions);
-    });
-
-    rl.on('error', (err) => {
-      reject(err);
+      // Include session data in rejection potentially
+      reject({ error: err, sessionInfo: { ...currentSessionInfo }, sessionFighters: Object.values(currentSessionFighterDamage) });
     });
 
     fileStream.on('error', (err) => {
@@ -440,22 +443,14 @@ app.whenReady().then(async () => {
       throw new Error('Log file path is required.');
     }
     try {
-      const fightData = await analyzeLogFile(filePath);
-      return fightData;
+      // analyzeLogFile now returns combined fight and session data
+      const combinedData = await analyzeLogFile(filePath);
+      return combinedData;
     } catch (error) {
-      throw new Error(`Failed to analyze log file: ${error.message}`);
-    }
-  });
-
-  ipcMain.handle('get-session-data', async (event, filePath) => {
-    if (!filePath) {
-      throw new Error('Log file path is required.');
-    }
-    try {
-      const sessionData = await analyzeSessionData(filePath);
-      return sessionData;
-    } catch (error) {
-      throw new Error(`Failed to analyze session data: ${error.message}`);
+        // Log the detailed error object if it exists
+        console.error("Error in get-fight-ids handler:", error);
+        const errorMessage = error.error ? error.error.message : error.message; // Extract message if wrapped
+        throw new Error(`Failed to analyze log file: ${errorMessage}`);
     }
   });
 
