@@ -7,5 +7,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onLoadFile: (callback) => ipcRenderer.on('load-file', (_event, value) => callback(value)),
   getFightIds: (filePath) => ipcRenderer.invoke('get-fight-ids', filePath),
   toggleAlwaysOnTop: (isAlwaysOnTop) => ipcRenderer.send('toggle-always-on-top', isAlwaysOnTop),
-  // getSessionData: (filePath) => ipcRenderer.invoke('get-session-data', filePath)
 }); 

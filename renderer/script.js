@@ -97,22 +97,7 @@ function updateSessionSummaryDisplay(sessionData) {
     return;
   }
 
-  const formatDateTime = (dateStr, timeStr) => {
-    if (!dateStr || !timeStr) return '??-?? ??:??';
-    const dateParts = dateStr.split('-');
-    const timeParts = timeStr.split(':');
-    if (dateParts.length < 3 || timeParts.length < 2) return '??-?? ??:??';
-    const day = dateParts[2];
-    const month = dateParts[1];
-    const hour = timeParts[0];
-    const minute = timeParts[1];
-    return `${day}/${month} ${hour}:${minute}`;
-  };
-
-  const startTimeFormatted = formatDateTime(sessionInfo.startDate, sessionInfo.startTime);
-  const endTimeFormatted = sessionInfo.endTime ? formatDateTime(sessionInfo.endDate, sessionInfo.endTime) : 'Ongoing';
-
-  screenTitleElement.textContent = `Session: ${startTimeFormatted} - ${endTimeFormatted}`;
+  screenTitleElement.textContent = `Last Session Summary`;
 
   if (fightersListElement) {
     fightersListElement.innerHTML = createFighterListHTML(sessionFighters, totalDamage);
