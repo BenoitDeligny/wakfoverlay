@@ -18,6 +18,10 @@
   <!-- Popup Menu (hidden by default) -->
   <div id="menu-popup" class="hidden">
     <div class="menu-section">
+      <a href="#" id="select-file-menu" class="menu-action">Select Log File</a>
+    </div>
+    <div class="menu-separator"></div>
+    <div class="menu-section">
       <a href="#" class="menu-nav-link active" data-target="fight-screen">Current Fight</a>
       <a href="#" class="menu-nav-link" data-target="last-fight-screen">Last Fight</a>
       <a href="#" class="menu-nav-link" data-target="session-summary-screen">Session Summary</a>
@@ -29,6 +33,12 @@
         <span class="slider round"></span>
       </label>
       <span class="toggle-label">Always on Top</span>
+    </div>
+    <div class="menu-separator"></div>
+    <div class="menu-section menu-slider-section">
+      <label for="opacity-slider" class="slider-label">Opacity:</label>
+      <input type="range" id="opacity-slider" min="0" max="100" value="92">
+      <span id="opacity-value">92%</span>
     </div>
   </div>
 

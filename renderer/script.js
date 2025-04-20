@@ -11,6 +11,8 @@ const menuPopup = document.getElementById('menu-popup');
 const menuNavLinks = document.querySelectorAll('.menu-nav-link');
 const sessionTotalDamageElem = document.getElementById('session-total-damage');
 const sessionFightersList = document.getElementById('session-fighters-list');
+const opacitySlider = document.getElementById('opacity-slider');
+const opacityValueSpan = document.getElementById('opacity-value');
 
 let selectedFilePath = null;
 let pollInterval = null;
@@ -60,10 +62,25 @@ function createFighterListHTML(fighters, totalFightDamage) {
   fighters.sort((a, b) => (b.damageDealt || 0) - (a.damageDealt || 0));
 
   let html = '';
-  fighters.forEach(fighter => {
+  fighters.forEach((fighter, index) => {
     const damage = fighter.damageDealt || 0;
     const percentage = (totalFightDamage > 0) ? ((damage / totalFightDamage) * 100).toFixed(1) : 0;
-    html += `<li>${fighter.name}: ${damage.toLocaleString()} (${percentage}%)</li>`;
+    
+    // Apply different color classes based on position
+    let damageClass = '';
+    if (index === 0) damageClass = 'damage-gold';
+    else if (index === 1) damageClass = 'damage-silver';
+    else if (index === 2) damageClass = 'damage-bronze';
+    else damageClass = 'damage-normal';
+    
+    // Use vertical layout with name on top and damage below
+    html += `<li style="display: flex; flex-direction: column; padding-bottom: 10px;">
+      <span class="fighter-name-row">${fighter.name}</span>
+      <span class="damage-row">
+        <span class="${damageClass}">${damage.toLocaleString()}</span>
+        <span class="damage-percent">(${percentage}%)</span>
+      </span>
+    </li>`;
   });
   return html;
 }
@@ -186,9 +203,40 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentFightersList = document.getElementById('current-fighters-list');
   const lastFightersList = document.getElementById('last-fighters-list');
   const sessionFightersList = document.getElementById('session-fighters-list');
+  const opacitySlider = document.getElementById('opacity-slider');
+  const opacityValueSpan = document.getElementById('opacity-value');
+  const selectFileMenu = document.getElementById('select-file-menu');
 
   let currentFilePath = null;
   let intervalId = null;
+
+  // --- Opacity Control --- 
+  const bodyRgbColor = '25, 25, 35'; // Base color from CSS
+
+  function updateBodyOpacity(value) {
+    const percentage = parseInt(value, 10);
+    const alpha = (percentage / 100).toFixed(2);
+    document.body.style.backgroundColor = `rgba(${bodyRgbColor}, ${alpha})`;
+    if (opacityValueSpan) {
+      opacityValueSpan.textContent = `${percentage}%`;
+    }
+  }
+
+  if (opacitySlider) {
+    // Initialize display and background based on slider's default value
+    updateBodyOpacity(opacitySlider.value);
+
+    opacitySlider.addEventListener('input', (event) => {
+      updateBodyOpacity(event.target.value);
+    });
+
+    // Optional: Add a 'change' listener if you want to save the value only when user releases slider
+    // opacitySlider.addEventListener('change', (event) => {
+    //   // Call function to save opacity value (e.g., using electronAPI)
+    //   console.log('Save opacity:', event.target.value);
+    // });
+  }
+  // --- End Opacity Control ---
 
   // --- Menu Logic --- 
   menuBtn.addEventListener('click', (event) => {
@@ -347,5 +395,21 @@ document.addEventListener('DOMContentLoaded', () => {
     currentFilePath = filePath;
     startAutoUpdate();
   });
+
+  // --- File Selection Menu Item ---
+  if (selectFileMenu) {
+    selectFileMenu.addEventListener('click', async () => {
+      menuPopup.classList.add('hidden'); // Hide menu after selection
+      try {
+        currentFilePath = await window.electronAPI.selectFile();
+        if (currentFilePath) {
+          startAutoUpdate();
+        }
+      } catch (error) {
+        console.error(`Error selecting file: ${error.message}`);
+      }
+    });
+  }
+  // --- End File Selection Menu Item ---
 
 });
