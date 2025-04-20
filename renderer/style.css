@@ -1,4 +1,3 @@
-/* Global Reset & Body Styling */
 html, body {
   padding: 0;
   margin: 0;
@@ -8,8 +7,8 @@ html, body {
 }
 
 body {
-  background-color: rgba(25, 25, 35, 0.92); /* Darker purple/blue base */
-  color: rgba(230, 230, 240, 0.9); /* Light base text */
+  background-color: rgba(25, 25, 35, 0.92);
+  color: rgba(230, 230, 240, 0.9);
   display: flex;
   flex-direction: column;
   height: 100%; 
@@ -26,39 +25,35 @@ body {
   padding: 10px 20px 20px 20px;
 }
 
-/* Container for top controls */
 .top-controls {
   display: flex;
   justify-content: space-between; 
   align-items: center;
   padding: 6px 8px; 
   flex-shrink: 0;
-  /* Container is draggable */
 }
 
-/* Menu Button */
 #menu-btn {
   padding: 2px 6px;
   cursor: pointer;
   font-size: 1.3em; 
   line-height: 1;
-  color: rgba(200, 220, 255, 0.7); /* Lighter icon color */
+  color: rgba(200, 220, 255, 0.7);
   border-radius: 3px;
   transition: background-color 0.2s, color 0.2s;
   -webkit-app-region: no-drag; 
 }
 
 #menu-btn:hover {
-  background-color: rgba(0, 200, 255, 0.15); /* Cyan hover */
-  color: #0af; /* Bright cyan */
+  background-color: rgba(0, 200, 255, 0.15);
+  color: #0af;
 }
 
-/* Popup Menu */
 #menu-popup {
   position: absolute;
   top: 38px; 
   left: 8px; 
-  background-color: rgba(35, 35, 50, 0.98); /* Dark popup */
+  background-color: rgba(35, 35, 50, 0.98);
   border: 1px solid rgba(170, 180, 255, 0.15);
   border-radius: 4px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
@@ -79,7 +74,7 @@ body {
 .menu-nav-link {
   display: block;
   padding: 7px 0; 
-  color: rgba(220, 220, 230, 0.85); /* Light link text */
+  color: rgba(220, 220, 230, 0.85);
   text-decoration: none;
   font-size: 0.95em; 
   border-radius: 3px;
@@ -87,12 +82,12 @@ body {
 }
 
 .menu-nav-link:hover {
-  background-color: rgba(0, 255, 150, 0.1); /* Lime hover */
-  color: #0f8; /* Bright lime */
+  background-color: rgba(0, 255, 150, 0.1);
+  color: #0f8;
 }
 
 .menu-nav-link.active {
-  color: #f0f; /* Bright Pink for active view */
+  color: #f0f;
   font-weight: bold;
 }
 
@@ -125,11 +120,10 @@ body {
 }
 
 .menu-toggle-section .toggle-label {
-  color: rgba(220, 220, 230, 0.85); /* Match link color */
-  font-size: 0.95em; /* Match link size */
+  color: rgba(220, 220, 230, 0.85);
+  font-size: 0.95em;
 }
 
-/* Opacity Slider Section */
 .menu-slider-section {
   padding-top: 8px;
   padding-bottom: 8px;
@@ -143,10 +137,10 @@ body {
 }
 
 #opacity-slider {
-  width: calc(100% - 50px); /* Adjust width relative to value display */
+  width: calc(100% - 50px);
   height: 5px;
   cursor: pointer;
-  accent-color: #f0f; /* Use pink accent for slider */
+  accent-color: #f0f;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 5px;
   vertical-align: middle;
@@ -158,7 +152,7 @@ body {
   appearance: none;
   width: 14px;
   height: 14px;
-  background: #f0f; /* Pink thumb */
+  background: #f0f;
   border-radius: 50%;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -175,16 +169,15 @@ body {
 
 #opacity-value {
   display: inline-block;
-  min-width: 35px; /* Ensure space for percentage */
+  min-width: 35px;
   text-align: right;
   font-size: 0.9em;
   color: rgba(200, 200, 210, 0.8);
   vertical-align: middle;
 }
 
-/* Close Button */
 #close-btn {
-  width: 16px; /* Make it slightly smaller */
+  width: 16px;
   height: 16px;
   cursor: pointer;
   position: relative;
@@ -199,16 +192,16 @@ body {
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: rgba(200, 220, 255, 0.7); /* Adjusted color slightly */
+  background-color: rgba(200, 220, 255, 0.7);
   transition: background-color 0.2s;
 }
 
 #close-btn::before {
-  transform: translateY(-50%) rotate(45deg); /* Restore rotation */
+  transform: translateY(-50%) rotate(45deg);
 }
 
 #close-btn::after {
-  transform: translateY(-50%) rotate(-45deg); /* Restore rotation */
+  transform: translateY(-50%) rotate(-45deg);
 }
 
 #close-btn:hover::before,
@@ -216,7 +209,6 @@ body {
   background-color: #f5f5ff; 
 }
 
-/* Always on Top Toggle */
 .toggle-label {
   margin-left: 8px; 
   font-size: 0.9em; 
@@ -246,7 +238,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.15); /* Light gray background */
+  background-color: rgba(255, 255, 255, 0.15);
   transition: .3s;
   border-radius: 18px;
 }
@@ -258,14 +250,14 @@ body {
   width: 14px;
   left: 2px;
   bottom: 2px;
-  background-color: rgba(220, 220, 230, 0.7); /* Light gray knob */
+  background-color: rgba(220, 220, 230, 0.7);
   transition: .3s;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* Stronger shadow */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 input:checked + .slider {
-  background-color: #f0f; /* Pink when active */
+  background-color: #f0f;
 }
 
 input:checked + .slider:before {
@@ -273,7 +265,6 @@ input:checked + .slider:before {
   background-color: white;
 }
 
-/* Separator */
 .separator {
   height: 1px;
   background-color: rgba(255, 255, 255, 0.1);
@@ -281,7 +272,6 @@ input:checked + .slider:before {
   flex-shrink: 0; 
 }
 
-/* Screen Container Styling */
 .screen {
   display: none; 
   flex-grow: 1; 
@@ -311,7 +301,6 @@ input:checked + .slider:before {
   border-radius: 4px;
 }
 
-/* Content Scrolling Area */
 #fight-content, #last-fight-content, #session-summary-content {
   flex-grow: 1;
   overflow-y: auto; 
@@ -324,7 +313,6 @@ input:checked + .slider:before {
   padding-left: 5px;
 }
 
-/* List Item Styling for Fighter Lists */
 #current-fighters-list, 
 #last-fighters-list, 
 #session-fighters-list {
@@ -358,7 +346,6 @@ input:checked + .slider:before {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
 }
 
-/* Custom bullet markers - removing them */
 #current-fighters-list li::before, 
 #last-fighters-list li::before, 
 #session-fighters-list li::before {
@@ -366,7 +353,6 @@ input:checked + .slider:before {
   display: none;
 }
 
-/* First three fighters also shouldn't have special markers */
 #current-fighters-list li:nth-child(1)::before, 
 #last-fighters-list li:nth-child(1)::before, 
 #session-fighters-list li:nth-child(1)::before,
@@ -380,7 +366,6 @@ input:checked + .slider:before {
   display: none;
 }
 
-/* Style the fighter name */
 #current-fighters-list li, 
 #last-fighters-list li, 
 #session-fighters-list li {
@@ -388,26 +373,23 @@ input:checked + .slider:before {
   font-weight: 500;
 }
 
-/* Style the damage number and percentage */
 #current-fighters-list li::after, 
 #last-fighters-list li::after, 
 #session-fighters-list li::after {
   content: attr(data-damage);
-  display: none; /* Hide by default - just using for custom styling */
+  display: none;
 }
 
-/* Fighter & Spell List Styling - Readability Enhancements */
 .fighter-row {
   padding: 9px 7px; 
   margin-bottom: 6px; 
-  background-color: rgba(255, 255, 255, 0.05); /* Slightly more visible background */
+  background-color: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
   font-size: 1.1em; 
-  /* Removed color here, apply to children */
   display: flex; 
   justify-content: space-between;
   align-items: center; 
-  border-left: 3px solid rgba(0, 255, 150, 0.4); /* Slightly more visible border */
+  border-left: 3px solid rgba(0, 255, 150, 0.4);
 }
 
 .fighter-name {
@@ -424,18 +406,17 @@ input:checked + .slider:before {
 .fighter-damage {
   font-weight: 700; 
   font-size: 1.2em; 
-  color: #ff0; /* Bright Yellow */
+  color: #ff0;
   margin-left: 5px; 
   text-shadow: 
-    0 0 4px rgba(255, 255, 0, 0.4), /* Yellow glow */
-    1px 1px 1px rgba(0, 0, 0, 0.5); /* Subtle dark shadow for contrast */
+    0 0 4px rgba(255, 255, 0, 0.4),
+    1px 1px 1px rgba(0, 0, 0, 0.5);
 }
 
 .spell-breakdown, .spell-row {
   display: none; 
 }
 
-/* Total Damage Area */
 #fight-total, #last-fight-total, #session-summary-total {
   padding: 12px 10px;
   margin-top: 12px; 
@@ -459,11 +440,10 @@ input:checked + .slider:before {
   font-weight: 700;
 }
 
-/* Other styles */
 .no-data {
   text-align: center;
   font-style: italic;
-  color: rgba(200, 200, 210, 0.6); /* Lighter placeholder text */
+  color: rgba(200, 200, 210, 0.6);
   padding: 25px 15px;
   font-size: 1em;
 }
@@ -502,7 +482,6 @@ input:checked + .slider:before {
   }
 }
 
-/* Damage value styling */
 .damage-gold, .damage-silver, .damage-bronze, .damage-normal, .damage-percent {
   cursor: pointer;
 }

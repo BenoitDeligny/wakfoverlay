@@ -66,14 +66,12 @@ function createFighterListHTML(fighters, totalFightDamage) {
     const damage = fighter.damageDealt || 0;
     const percentage = (totalFightDamage > 0) ? ((damage / totalFightDamage) * 100).toFixed(1) : 0;
     
-    // Apply different color classes based on position
     let damageClass = '';
     if (index === 0) damageClass = 'damage-gold';
     else if (index === 1) damageClass = 'damage-silver';
     else if (index === 2) damageClass = 'damage-bronze';
     else damageClass = 'damage-normal';
     
-    // Use vertical layout with name on top and damage below
     html += `<li style="display: flex; flex-direction: column; padding-bottom: 10px;">
       <span class="fighter-name-row">${fighter.name}</span>
       <span class="damage-row">
@@ -123,8 +121,6 @@ function updateSessionSummaryDisplay(sessionData) {
 
   if (fightersListElement) {
     fightersListElement.innerHTML = createFighterListHTML(sessionFighters, totalDamage);
-  } else {
-      console.error("Could not find session fighters list element (#session-fighters-list).");
   }
 
   if (totalDamageElement) {
@@ -161,8 +157,6 @@ async function fetchLogContent() {
     if(screenTitleElement) screenTitleElement.textContent = 'Session Summary - Error';
     if(totalDamageElement) totalDamageElement.textContent = 'Error';
     if(fightersListElement) fightersListElement.innerHTML = `<p>Error loading session data: ${error.message}</p>`;
-    
-    console.error('Error fetching combined data:', error);
 
     if (pollInterval) {
       clearInterval(pollInterval);
@@ -210,8 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentFilePath = null;
   let intervalId = null;
 
-  // --- Opacity Control --- 
-  const bodyRgbColor = '25, 25, 35'; // Base color from CSS
+  const bodyRgbColor = '25, 25, 35';
 
   function updateBodyOpacity(value) {
     const percentage = parseInt(value, 10);
@@ -223,24 +216,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (opacitySlider) {
-    // Initialize display and background based on slider's default value
     updateBodyOpacity(opacitySlider.value);
 
     opacitySlider.addEventListener('input', (event) => {
       updateBodyOpacity(event.target.value);
     });
-
-    // Optional: Add a 'change' listener if you want to save the value only when user releases slider
-    // opacitySlider.addEventListener('change', (event) => {
-    //   // Call function to save opacity value (e.g., using electronAPI)
-    //   console.log('Save opacity:', event.target.value);
-    // });
   }
-  // --- End Opacity Control ---
 
-  // --- Menu Logic --- 
   menuBtn.addEventListener('click', (event) => {
-    event.stopPropagation(); // Prevent click from immediately closing menu
+    event.stopPropagation();
     menuPopup.classList.toggle('hidden');
   });
 
@@ -251,14 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   menuPopup.addEventListener('click', (event) => {
-    // Close menu if a nav link is clicked
     if (event.target.classList.contains('menu-nav-link')) {
       menuPopup.classList.add('hidden');
     }
   });
-  // --- End Menu Logic ---
 
-  // --- Navigation Logic --- 
   function showScreen(targetId) {
     screens.forEach(screen => {
       screen.classList.remove('active');
@@ -285,11 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Show default screen
   showScreen('fight-screen');
-  // --- End Navigation Logic ---
 
-  // --- Window Controls ---
   closeBtn.addEventListener('click', () => {
     window.electronAPI.closeWindow();
   });
@@ -297,9 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
   alwaysOnTopCheckbox.addEventListener('change', () => {
     window.electronAPI.toggleAlwaysOnTop(alwaysOnTopCheckbox.checked);
   });
-  // --- End Window Controls ---
 
-  // --- File Handling and Data Update --- 
   const formatDamage = (damage) => {
       return damage.toLocaleString('en-US');
   };
@@ -313,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Sort fighters by damage dealt, descending
     const sortedFighters = fighters.filter(f => !f.isAI && f.damageDealt > 0)
                                   .sort((a, b) => b.damageDealt - a.damageDealt);
 
@@ -345,42 +320,37 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const data = await window.electronAPI.getFightData(currentFilePath);
 
-      // Update Current Fight
       if (currentFightTotalDamageElem) {
           currentFightTotalDamageElem.textContent = formatDamage(data.currentFightTotalDamage || 0);
       }
       updateFighterList(currentFightersList, data.currentFightFighters, 'current');
 
-      // Update Last Completed Fight
       if (lastFightTotalDamageElem) {
           lastFightTotalDamageElem.textContent = formatDamage(data.lastCompletedFightTotalDamage || 0);
       }
       updateFighterList(lastFightersList, data.lastCompletedFightFighters, 'last');
       
-      // Update Session Summary
       if (sessionTotalDamageElem) {
           sessionTotalDamageElem.textContent = formatDamage(data.sessionInfo?.totalDamage || 0);
       }
       updateFighterList(sessionFightersList, data.sessionFighters, 'session');
 
     } catch (error) {
-      console.error('Failed to update fight data:', error);
-      // Optionally display an error to the user
       if (currentFightersList) currentFightersList.innerHTML = `<div class="no-data error">Error loading data: ${error.message}</div>`;
       if (lastFightersList) lastFightersList.innerHTML = '';
       if (sessionFightersList) sessionFightersList.innerHTML = '';
       if (currentFightTotalDamageElem) currentFightTotalDamageElem.textContent = 'Error';
       if (lastFightTotalDamageElem) lastFightTotalDamageElem.textContent = 'Error';
       if (sessionTotalDamageElem) sessionTotalDamageElem.textContent = 'Error';
-      stopAutoUpdate(); // Stop polling if there's an error
+      stopAutoUpdate();
     }
   }
 
   function startAutoUpdate() {
-    stopAutoUpdate(); // Clear existing interval if any
+    stopAutoUpdate();
     if (currentFilePath) {
-      updateFightData(); // Initial update
-      intervalId = setInterval(updateFightData, 2000); // Update every 2 seconds
+      updateFightData();
+      intervalId = setInterval(updateFightData, 2000);
     }
   }
 
@@ -396,20 +366,17 @@ document.addEventListener('DOMContentLoaded', () => {
     startAutoUpdate();
   });
 
-  // --- File Selection Menu Item ---
   if (selectFileMenu) {
     selectFileMenu.addEventListener('click', async () => {
-      menuPopup.classList.add('hidden'); // Hide menu after selection
+      menuPopup.classList.add('hidden');
       try {
         currentFilePath = await window.electronAPI.selectFile();
         if (currentFilePath) {
           startAutoUpdate();
         }
       } catch (error) {
-        console.error(`Error selecting file: ${error.message}`);
       }
     });
   }
-  // --- End File Selection Menu Item ---
 
 });

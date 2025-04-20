@@ -7,15 +7,11 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Container for top controls -->
   <div class="top-controls">
-    <div id="menu-btn">☰</div> <!-- Menu icon now on the left -->
-    <!-- Toggle switch removed, will be in menu -->
-    <!-- <span class="toggle-label">Always on Top</span> -->
-    <div id="close-btn"></div> <!-- Close button remains on the right -->
+    <div id="menu-btn">☰</div>
+    <div id="close-btn"></div>
   </div>
 
-  <!-- Popup Menu (hidden by default) -->
   <div id="menu-popup" class="hidden">
     <div class="menu-section">
       <a href="#" id="select-file-menu" class="menu-action">Select Log File</a>
@@ -42,10 +38,7 @@
     </div>
   </div>
 
-  <!-- Separator kept for now, can remove via CSS if needed -->
-  <div class="separator"></div> 
-
-  <!-- Navigation div removed -->
+  <div class="separator"></div>
   
   <div id="fight-screen" class="screen active">
     <h2>Current Fight</h2>
@@ -76,12 +69,6 @@
       Total Session Damage: <span id="session-total-damage">0</span>
     </div>
   </div>
-
-  <!--
-  <div id="content-area">
-    <pre id="logContent"></pre>
-  </div>
-  -->
 
   <script src="script.js"></script>
 </body>
