@@ -2,7 +2,7 @@
   "name": "wakfoverlay",
   "version": "0.1.0",
   "description": "An overlay for Wakfu to display information from logs.",
-  "main": "main.js",
+  "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
     "lint": "eslint . --ext .ts,.js",
@@ -24,8 +24,8 @@
     "appId": "com.example.wakfoverlay",
     "productName": "WakfOverlay",
     "files": [
-      "main.js",
-      "preload.js",
+      "src/main/**/*",
+      "src/preload/**/*",
       "renderer/**/*",
       "node_modules/**/*"
     ],

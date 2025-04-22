@@ -1,8 +1,7 @@
 # wakfoverlay
 
 TODO
-- screen "session"
+- deduplicate logs
 - healing
 - armor
-- fix useless summons
 - click to open an element damages details / spell damages details

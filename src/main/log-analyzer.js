@@ -1,24 +1,11 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-const path = require('path');
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const readline = require('readline');
+const { formatDate, isTimeEarlier } = require('./utils');
 
-const userDataPath = app.getPath('userData');
-const configPath = path.join(userDataPath, 'config.json');
-
-const formatDate = (date) => {
-  if (!date) return null;
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
-
-const isTimeEarlier = (time1, time2) => {
-    return time1 < time2;
-};
-
+/**
+ * Analyzes a Wakfu log file to extract fight data
+ */
 async function analyzeLogFile(filePath) {
   let lastCompletedFight = { id: null, totalDamage: 0, fighters: [] };
   let currentFight = { id: null, startTime: null, totalDamage: 0, fighters: [] };
@@ -318,126 +305,6 @@ async function analyzeLogFile(filePath) {
   });
 }
 
-async function saveLastFile(filePath) {
-  try {
-    const config = { lastFilePath: filePath };
-    await fs.writeFile(configPath, JSON.stringify(config, null, 2));
-  } catch (error) {
-  }
-}
-
-async function loadLastFile() {
-  try {
-    await fs.access(configPath); 
-    const data = await fs.readFile(configPath, 'utf-8');
-    const config = JSON.parse(data);
-    if (config && config.lastFilePath) {
-        try {
-            await fs.access(config.lastFilePath);
-            return config.lastFilePath;
-        } catch (accessError) {
-            return null;
-        }
-    }
-    return null;
-  } catch (error) {
-    return null;
-  }
-}
-
-let mainWindow;
-
-function createWindow () {
-  mainWindow = new BrowserWindow({
-    width: 300,
-    height: 760,
-    transparent: true, 
-    frame: false, 
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false 
-    }
-  });
-
-  mainWindow.loadFile('renderer/index.html');
-
-  return mainWindow;
-}
-
-app.whenReady().then(async () => {
-  ipcMain.on('close-window', (event) => {
-    const webContents = event.sender;
-    const win = BrowserWindow.fromWebContents(webContents);
-    if (win) {
-      win.close();
-    }
-  });
-
-  ipcMain.on('toggle-always-on-top', (event, isAlwaysOnTop) => {
-    if (mainWindow) {
-      mainWindow.setAlwaysOnTop(isAlwaysOnTop);
-    }
-  });
-
-  ipcMain.handle('select-file', async (event) => {
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile'],
-    });
-
-    if (!result.canceled && result.filePaths.length > 0) {
-      const filePath = result.filePaths[0];
-      await saveLastFile(filePath);
-      return filePath;
-    }
-    return null;
-  });
-
-  ipcMain.handle('read-file-content', async (event, filePath) => {
-    if (!filePath) {
-      throw new Error('File path is not provided.');
-    }
-    try {
-      await fs.access(filePath);
-      const content = await fs.readFile(filePath, 'utf-8');
-      return content;
-    } catch (error) {
-      if (error.code === 'ENOENT') {
-        throw new Error(`File not found: ${filePath}`);
-      } else {
-        throw new Error(`Failed to read file: ${error.message}`);
-      }
-    }
-  });
-
-  ipcMain.handle('get-fight-ids', async (event, filePath) => {
-    if (!filePath) {
-      throw new Error('Log file path is required.');
-    }
-    try {
-      const combinedData = await analyzeLogFile(filePath);
-      return combinedData;
-    } catch (error) {
-        throw new Error(`Failed to analyze log file: ${error.message}`);
-    }
-  });
-
-  const createdWindow = createWindow();
-
-  const lastFilePath = await loadLastFile();
-  if (lastFilePath) {
-    createdWindow.webContents.on('did-finish-load', () => {
-      createdWindow.webContents.send('load-file', lastFilePath);
-    });
-  }
-
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-    }
-  });
-});
-
-app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit();
-}); 
+module.exports = {
+  analyzeLogFile
+}; 
