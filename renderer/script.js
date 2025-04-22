@@ -59,6 +59,12 @@ function createFighterListHTML(fighters, totalFightDamage) {
     return '<p>No fighter data available.</p>';
   }
 
+  fighters = fighters.filter(fighter => (fighter.damageDealt || 0) > 0);
+  
+  if (fighters.length === 0) {
+    return '<p>No damage dealt by players.</p>';
+  }
+
   fighters.sort((a, b) => (b.damageDealt || 0) - (a.damageDealt || 0));
 
   let html = '';
