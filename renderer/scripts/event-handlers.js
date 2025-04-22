@@ -1,4 +1,4 @@
-import { showScreen, updateBodyOpacity } from './ui-manager.js';
+import { showScreen, updateBodyOpacity, setupFighterItemClickHandlers } from './ui-manager.js';
 import { startPolling, selectAndProcessFile, setSelectedFilePath } from './data-fetcher.js';
 
 /**
@@ -86,4 +86,7 @@ export function setupEventHandlers() {
   if (opacitySlider) {
     updateBodyOpacity(opacitySlider.value);
   }
+
+  // Fighter list item click handlers
+  setupFighterItemClickHandlers();
 } 

@@ -25,12 +25,20 @@ export function createFighterListHTML(fighters, totalFightDamage) {
     else if (index === 2) damageClass = 'damage-bronze';
     else damageClass = 'damage-normal';
     
-    html += `<li style="display: flex; flex-direction: column; padding-bottom: 10px;">
-      <span class="fighter-name-row">${fighter.name}</span>
-      <span class="damage-row">
-        <span class="${damageClass}">${damage.toLocaleString()}</span>
-        <span class="damage-percent">(${percentage}%)</span>
-      </span>
+    html += `<li class="fighter-item" data-fighter-id="${fighter.fighterId || index}">
+      <div class="fighter-content">
+        <div class="fighter-info">
+          <span class="expand-icon">▶</span>
+          <span class="fighter-name-row">${fighter.name}</span>
+        </div>
+        <div class="damage-row">
+          <span class="${damageClass}">${damage.toLocaleString()}</span>
+          <span class="damage-percent">(${percentage}%)</span>
+        </div>
+      </div>
+      <div class="fighter-details">
+        DETAILS
+      </div>
     </li>`;
   });
   return html;
@@ -57,6 +65,9 @@ export function updateFightDisplays(fightData) {
   if (lastFightersListElement) {
     lastFightersListElement.innerHTML = createFighterListHTML(fightData.lastCompletedFightFighters, fightData.lastCompletedFightTotalDamage);
   }
+  
+  // Re-attach event handlers
+  setupFighterItemClickHandlers();
 }
 
 /**
@@ -90,6 +101,9 @@ export function updateSessionSummaryDisplay(sessionData) {
   if (totalDamageElement) {
     totalDamageElement.textContent = totalDamage.toLocaleString();
   }
+  
+  // Re-attach event handlers
+  setupFighterItemClickHandlers();
 }
 
 /**
@@ -140,4 +154,53 @@ export function updateLogScreen(logData) {
     logContent.textContent = logData;
     logContent.scrollTop = logContent.scrollHeight;
   }
+}
+
+/**
+ * Sets up click handlers for fighter list items
+ * Needs to be called after each time the fighter list is updated
+ */
+export function setupFighterItemClickHandlers() {
+  // Store expanded fighter IDs to preserve state across updates
+  if (!window.expandedFighters) {
+    window.expandedFighters = new Set();
+  }
+
+  // Apply expanded class to any fighters that were previously expanded
+  document.querySelectorAll('.fighter-item').forEach(item => {
+    const fighterId = item.getAttribute('data-fighter-id');
+    if (window.expandedFighters.has(fighterId)) {
+      item.classList.add('expanded');
+    }
+  });
+
+  const fighterLists = [
+    document.getElementById('current-fighters-list'),
+    document.getElementById('last-fighters-list'),
+    document.getElementById('session-fighters-list')
+  ];
+  
+  fighterLists.forEach(list => {
+    if (list) {
+      // Remove existing event listener to prevent duplicates
+      const newList = list.cloneNode(true);
+      list.parentNode.replaceChild(newList, list);
+      
+      newList.addEventListener('click', (event) => {
+        const fighterItem = event.target.closest('.fighter-item');
+        if (fighterItem) {
+          const fighterId = fighterItem.getAttribute('data-fighter-id');
+          
+          // Toggle expanded state
+          if (fighterItem.classList.contains('expanded')) {
+            fighterItem.classList.remove('expanded');
+            window.expandedFighters.delete(fighterId);
+          } else {
+            fighterItem.classList.add('expanded');
+            window.expandedFighters.add(fighterId);
+          }
+        }
+      });
+    }
+  });
 } 
