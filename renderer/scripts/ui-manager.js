@@ -50,11 +50,7 @@ export function createFighterListHTML(fighters, totalFightDamage) {
     const damage = fighter.damageDealt || 0;
     const percentage = (totalFightDamage > 0) ? ((damage / totalFightDamage) * 100).toFixed(1) : 0;
     
-    let damageClass = '';
-    if (index === 0) damageClass = 'damage-gold';
-    else if (index === 1) damageClass = 'damage-silver';
-    else if (index === 2) damageClass = 'damage-bronze';
-    else damageClass = 'damage-normal';
+    let damageClass = 'damage-normal';
     
     html += `<li class="fighter-item" data-fighter-id="${fighter.fighterId || index}">
       <div class="fighter-content">
