@@ -532,6 +532,64 @@ input:checked + .slider:before {
   transform: none !important;
 }
 
+.spell-damage-info {
+  width: 100%;
+}
+
+.spell-damage-info p {
+  margin: 0 0 8px 0;
+  font-size: 0.95em;
+  color: #0ff;
+  border-bottom: 1px dotted rgba(0, 255, 255, 0.3);
+  padding-bottom: 5px;
+}
+
+.spell-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.spell-item {
+  font-size: 0.9em;
+  font-weight: normal;
+  padding: 3px 5px;
+  color: rgba(220, 220, 255, 0.9);
+  border-left: 2px solid rgba(255, 150, 255, 0.3);
+  padding-left: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.spell-name {
+  flex: 3;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(180, 220, 255, 0.95);
+  font-weight: 500;
+}
+
+.spell-damage {
+  flex: 1;
+  text-align: right;
+  color: rgba(255, 255, 0, 0.95);
+  font-weight: 600;
+  margin: 0 6px;
+  min-width: 60px;
+}
+
+.spell-percent {
+  flex: 0;
+  text-align: right;
+  color: rgba(180, 255, 200, 0.8);
+  font-size: 0.9em;
+  min-width: 45px;
+}
+
 .fighter-item.expanded .fighter-details {
   display: block !important;
 }

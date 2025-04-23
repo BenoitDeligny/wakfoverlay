@@ -12,6 +12,7 @@ async function analyzeLogFile(filePath) {
   let activeFight = null;
   let lineNumber = 0;
   let lastAttackerName = null;
+  let lastSpellCast = null;
 
   let sessionList = [];
   let currentSessionData = null;
@@ -41,7 +42,7 @@ async function analyzeLogFile(filePath) {
     fightEnd: /^\s*INFO\s+([\d:,\.]+)\s+\[.*\]\s+\(.*\)\s+-\s+\[FIGHT\] End fight with id (\d+)\s*$/,
     fighterJoin: /\[_FL_\]\s+fightId=(\d+)\s+(.+?)\s+breed\s+:\s+\d+\s+\[(-?\d+)\]\s+isControlledByAI=(true|false)/,
     damage: /\[Information \(jeu\)\]\s+(.+?):\s+-([\d\s]+)\s+PV\s+(\(.+\))/,
-    spellCast: /\[Information \(jeu\)\]\s+(.+?)\s+lance le sort\s+.*/,
+    spellCast: /\[Information \(jeu\)\]\s+(.+?)\s+lance le sort\s+(.*?)(?:\s+\(|\s*$)/,
     status: /\[Information \(jeu\)\]\s+(.+?):\s+(\w+)\s+\(\+(\d+)\s+Niv\.\)(?:\s+\((.+)\))?/,
     statusRemoval: /\[Information \(jeu\)\]\s+(.+?):\\s+n'est plus sous l'emprise '(.+?)'/
   };
@@ -74,6 +75,7 @@ async function analyzeLogFile(filePath) {
     };
     currentFight = { id: null, startTime: null, totalDamage: 0, fighters: [] };
     lastAttackerName = null;
+    lastSpellCast = null;
   }
 
   function handleFighterJoin(fighterMatch) {
@@ -97,6 +99,7 @@ async function analyzeLogFile(filePath) {
           fighterId: fighterId,
           isAI: isAI,
           damageDealt: 0,
+          spellDamage: {},
           activeStatuses: []
         };
         activeFight.fighters.push(newFighter);
@@ -159,6 +162,11 @@ async function analyzeLogFile(filePath) {
           const caster = activeFight.fighters.find(f => f.name === causingStatus.appliedBy);
           if (caster) {
             caster.damageDealt += damageAmount;
+            // Attribute status damage to "Status Effects" category
+            if (!caster.spellDamage["Status Effects"]) {
+              caster.spellDamage["Status Effects"] = 0;
+            }
+            caster.spellDamage["Status Effects"] += damageAmount;
             damageAttributed = true;
           }
         }
@@ -168,6 +176,13 @@ async function analyzeLogFile(filePath) {
       const attacker = activeFight.fighters.find(f => f.name === lastAttackerName);
       if (attacker && attacker.name !== targetName) {
         attacker.damageDealt += damageAmount;
+        
+        // Attribute damage to the last spell cast by this attacker
+        const spellName = lastSpellCast || "Unknown Spell";
+        if (!attacker.spellDamage[spellName]) {
+          attacker.spellDamage[spellName] = 0;
+        }
+        attacker.spellDamage[spellName] += damageAmount;
       }
     }
   }
@@ -188,9 +203,23 @@ async function analyzeLogFile(filePath) {
           const damage = fighter.damageDealt || 0;
           if (damage > 0) {
               if (!currentSessionData.fighters[name]) {
-                  currentSessionData.fighters[name] = { name: name, damageDealt: 0 };
+                  currentSessionData.fighters[name] = { 
+                    name: name, 
+                    damageDealt: 0,
+                    spellDamage: {}
+                  };
               }
               currentSessionData.fighters[name].damageDealt += damage;
+              
+              // Add spell damage data to session fighter
+              if (fighter.spellDamage) {
+                Object.entries(fighter.spellDamage).forEach(([spellName, spellDamage]) => {
+                  if (!currentSessionData.fighters[name].spellDamage[spellName]) {
+                    currentSessionData.fighters[name].spellDamage[spellName] = 0;
+                  }
+                  currentSessionData.fighters[name].spellDamage[spellName] += spellDamage;
+                });
+              }
           }
       });
     }
@@ -198,6 +227,7 @@ async function analyzeLogFile(filePath) {
     activeFight = null;
     currentFight = { id: null, startTime: null, totalDamage: 0, fighters: [] };
     lastAttackerName = null;
+    lastSpellCast = null;
   }
 
   return new Promise((resolve, reject) => {
@@ -259,6 +289,7 @@ async function analyzeLogFile(filePath) {
           handleFighterJoin(fighterMatch);
       } else if (spellCastMatch && activeFight) {
           lastAttackerName = spellCastMatch[1].trim();
+          lastSpellCast = spellCastMatch[2].trim();
       } else if (statusMatch && activeFight) {
           handleStatus(statusMatch);
       } else if (damageMatch) {
@@ -282,7 +313,11 @@ async function analyzeLogFile(filePath) {
            totalDamage: lastSession.totalDamage
       } : { totalDamage: 0 };
 
-      const sessionFighters = lastSession ? Object.values(lastSession.fighters).sort((a, b) => b.damageDealt - a.damageDealt) : [];
+      const sessionFighters = lastSession ? Object.values(lastSession.fighters).map(fighter => ({
+        name: fighter.name,
+        damageDealt: fighter.damageDealt || 0,
+        spellDamage: fighter.spellDamage || {}
+      })).sort((a, b) => b.damageDealt - a.damageDealt) : [];
 
       const finalLastCompletedFighters = lastCompletedFight.fighters ? [...lastCompletedFight.fighters] : [];
       const finalCurrentFighters = currentFight.id && activeFight ? [...activeFight.fighters] : (currentFight.fighters || []);

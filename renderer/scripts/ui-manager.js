@@ -1,4 +1,35 @@
 /**
+ * Creates HTML for spell-specific damage details
+ */
+function createSpellDamageDetailsHTML(fighter) {
+  if (!fighter.spellDamage || Object.keys(fighter.spellDamage).length === 0) {
+    return `
+      <div class="spell-item">Spell data not yet available</div>
+      <div class="spell-item">The application currently tracks total damage only</div>
+      <div class="spell-item">Spell-specific damage tracking will be added in a future update</div>
+    `;
+  }
+
+  // Sort spells by damage (highest first)
+  const sortedSpells = Object.entries(fighter.spellDamage)
+    .sort((a, b) => b[1] - a[1]);
+  
+  let html = '';
+  sortedSpells.forEach(([spellName, damage]) => {
+    const percentage = ((damage / fighter.damageDealt) * 100).toFixed(1);
+    html += `
+      <div class="spell-item">
+        <span class="spell-name">${spellName}</span>
+        <span class="spell-damage">${damage.toLocaleString()}</span>
+        <span class="spell-percent">(${percentage}%)</span>
+      </div>
+    `;
+  });
+  
+  return html;
+}
+
+/**
  * Creates HTML for the fighter list display
  */
 export function createFighterListHTML(fighters, totalFightDamage) {
@@ -37,7 +68,12 @@ export function createFighterListHTML(fighters, totalFightDamage) {
         </div>
       </div>
       <div class="fighter-details">
-        DETAILS
+        <div class="spell-damage-info">
+          <p>Detailed spell damage distribution:</p>
+          <div class="spell-list">
+            ${createSpellDamageDetailsHTML(fighter)}
+          </div>
+        </div>
       </div>
     </li>`;
   });
