@@ -65,7 +65,7 @@ export function createFighterListHTML(fighters, totalFightDamage) {
       </div>
       <div class="fighter-details">
         <div class="spell-damage-info">
-          <p>Detailed spell damage distribution:</p>
+          <p>Spell damages:</p>
           <div class="spell-list">
             ${createSpellDamageDetailsHTML(fighter)}
           </div>
@@ -174,17 +174,6 @@ export function updateBodyOpacity(value) {
   const opacityValueSpan = document.getElementById('opacity-value');
   if (opacityValueSpan) {
     opacityValueSpan.textContent = `${percentage}%`;
-  }
-}
-
-/**
- * Updates the log content display
- */
-export function updateLogScreen(logData) {
-  const logContent = document.getElementById('logContent');
-  if (logContent) {
-    logContent.textContent = logData;
-    logContent.scrollTop = logContent.scrollHeight;
   }
 }
 

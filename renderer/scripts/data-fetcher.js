@@ -1,4 +1,4 @@
-import { updateFightDisplays, updateSessionSummaryDisplay, updateLogScreen } from './ui-manager.js';
+import { updateFightDisplays, updateSessionSummaryDisplay } from './ui-manager.js';
 
 let pollInterval = null;
 let selectedFilePath = null;
@@ -78,14 +78,13 @@ export async function selectAndProcessFile() {
     const filePath = await window.electronAPI.selectFile();
     if (filePath) {
       selectedFilePath = filePath;
-      const initialContent = await window.electronAPI.readFileContent(filePath);
-      updateLogScreen(initialContent);
+      await window.electronAPI.readFileContent(filePath);
       startPolling(filePath);
       return true;
     }
     return false;
   } catch (error) {
-    updateLogScreen(`Error selecting or reading file: ${error.message}`);
+    console.error(`Error selecting or reading file: ${error.message}`);
     stopPolling();
     return false;
   }
