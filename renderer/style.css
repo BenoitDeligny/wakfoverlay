@@ -384,6 +384,8 @@ input:checked + .slider:before {
   padding-left: var(--spacing-sm);
   transition: none;
   position: relative;
+  padding-right: var(--spacing-md);
+  margin-right: var(--spacing-xs);
 }
 
 #current-fighters-list, 
@@ -524,7 +526,8 @@ input:checked + .slider:before {
   font-weight: var(--font-weight-bold);
   height: auto !important;
   min-height: 20px;
-  max-height: none !important;
+  max-height: 300px !important;
+  overflow-y: auto;
   transform: none !important;
 }
 
@@ -582,6 +585,8 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+  max-height: 250px;
+  overflow-y: auto;
 }
 
 .spell-item {
@@ -688,4 +693,43 @@ input:checked + .slider:before {
   .spell-breakdown {
     margin-left: var(--spacing-md);
   }
+}
+
+/* ======= Custom Scrollbar Styling ======= */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background-color: rgba(25, 25, 35, 0.6);
+}
+
+::-webkit-scrollbar-track {
+  background-color: rgba(30, 35, 60, 0.3);
+  border-radius: var(--radius-md);
+  margin: 2px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, rgba(0, 255, 255, 0.3), rgba(100, 180, 255, 0.3));
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-accent-cyan);
+  box-shadow: 0 0 5px rgba(0, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, rgba(0, 255, 255, 0.5), rgba(100, 180, 255, 0.5));
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+}
+
+::-webkit-scrollbar-corner {
+  background-color: rgba(25, 25, 35, 0.6);
+}
+
+/* Firefox scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 255, 255, 0.3) rgba(30, 35, 60, 0.3);
+}
+
+*:hover {
+  scrollbar-color: rgba(0, 255, 255, 0.5) rgba(30, 35, 60, 0.3);
 }
