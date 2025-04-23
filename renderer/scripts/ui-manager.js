@@ -2,24 +2,39 @@
  * Creates HTML for spell-specific damage details
  */
 function createSpellDamageDetailsHTML(fighter) {
-  if (!fighter.spellDamage || Object.keys(fighter.spellDamage).length === 0) {
+  if (!fighter || !fighter.spellDamage || typeof fighter.spellDamage !== 'object' || Object.keys(fighter.spellDamage).length === 0) {
     return `
-      <div class="spell-item">Spell data not yet available</div>
-      <div class="spell-item">The application currently tracks total damage only</div>
-      <div class="spell-item">Spell-specific damage tracking will be added in a future update</div>
+      <div class="spell-item">
+        <span class="spell-name">No spell data available</span>
+        <span class="spell-damage">0</span>
+        <span class="spell-percent">(0.0%)</span>
+      </div>
     `;
   }
 
   // Sort spells by damage (highest first)
   const sortedSpells = Object.entries(fighter.spellDamage)
+    .filter(([_, damage]) => damage > 0)
     .sort((a, b) => b[1] - a[1]);
+  
+  if (sortedSpells.length === 0) {
+    return `
+      <div class="spell-item">
+        <span class="spell-name">No damage spells recorded</span>
+        <span class="spell-damage">0</span>
+        <span class="spell-percent">(0.0%)</span>
+      </div>
+    `;
+  }
+  
+  const fighterDamage = fighter.damageDealt || sortedSpells.reduce((sum, [_, damage]) => sum + damage, 0);
   
   let html = '';
   sortedSpells.forEach(([spellName, damage]) => {
-    const percentage = ((damage / fighter.damageDealt) * 100).toFixed(1);
+    const percentage = fighterDamage > 0 ? ((damage / fighterDamage) * 100).toFixed(1) : 0;
     html += `
       <div class="spell-item">
-        <span class="spell-name">${spellName}</span>
+        <span class="spell-name">${spellName || 'Unknown Spell'}</span>
         <span class="spell-damage">${damage.toLocaleString()}</span>
         <span class="spell-percent">(${percentage}%)</span>
       </div>
@@ -33,30 +48,43 @@ function createSpellDamageDetailsHTML(fighter) {
  * Creates HTML for the fighter list display
  */
 export function createFighterListHTML(fighters, totalFightDamage) {
-  if (!fighters || fighters.length === 0) {
+  // Safety check for input data
+  if (!fighters || !Array.isArray(fighters) || fighters.length === 0) {
     return '<p>No fighter data available.</p>';
   }
 
-  fighters = fighters.filter(fighter => (fighter.damageDealt || 0) > 0);
+  // Filter out fighters with no damage and ensure they have the expected properties
+  const validFighters = fighters.filter(fighter => 
+    fighter && 
+    typeof fighter === 'object' && 
+    (fighter.damageDealt || 0) > 0
+  );
   
-  if (fighters.length === 0) {
+  if (validFighters.length === 0) {
     return '<p>No damage dealt by players.</p>';
   }
 
-  fighters.sort((a, b) => (b.damageDealt || 0) - (a.damageDealt || 0));
+  // Ensure totalFightDamage is a number
+  const safeTotalDamage = typeof totalFightDamage === 'number' ? totalFightDamage : 
+    validFighters.reduce((sum, fighter) => sum + (fighter.damageDealt || 0), 0);
+
+  // Sort fighters by damage
+  validFighters.sort((a, b) => (b.damageDealt || 0) - (a.damageDealt || 0));
 
   let html = '';
-  fighters.forEach((fighter, index) => {
+  validFighters.forEach((fighter, index) => {
     const damage = fighter.damageDealt || 0;
-    const percentage = (totalFightDamage > 0) ? ((damage / totalFightDamage) * 100).toFixed(1) : 0;
+    const percentage = (safeTotalDamage > 0) ? ((damage / safeTotalDamage) * 100).toFixed(1) : 0;
+    const name = fighter.name || `Fighter ${index+1}`;
+    const fighterId = fighter.fighterId || `fighter-${index}`;
     
     let damageClass = 'damage-normal';
     
-    html += `<li class="fighter-item" data-fighter-id="${fighter.fighterId || index}">
+    html += `<li class="fighter-item" data-fighter-id="${fighterId}">
       <div class="fighter-content">
         <div class="fighter-info">
           <span class="expand-icon">▶</span>
-          <span class="fighter-name-row">${fighter.name}</span>
+          <span class="fighter-name-row">${name}</span>
         </div>
         <div class="damage-row">
           <span class="${damageClass}">${damage.toLocaleString()}</span>
@@ -85,17 +113,28 @@ export function updateFightDisplays(fightData) {
   const currentFightersListElement = document.getElementById('current-fighters-list');
   const lastFightersListElement = document.getElementById('last-fighters-list');
   
+  // Ensure data is properly structured or provide defaults
+  const safeData = {
+    currentFightTotalDamage: fightData && fightData.currentFightTotalDamage !== undefined ? fightData.currentFightTotalDamage : 0,
+    lastCompletedFightTotalDamage: fightData && fightData.lastCompletedFightTotalDamage !== undefined ? fightData.lastCompletedFightTotalDamage : 0,
+    currentFightFighters: fightData && Array.isArray(fightData.currentFightFighters) ? fightData.currentFightFighters : [],
+    lastCompletedFightFighters: fightData && Array.isArray(fightData.lastCompletedFightFighters) ? fightData.lastCompletedFightFighters : []
+  };
+  
   if (currentFightTotalDamageElement) {
-    currentFightTotalDamageElement.textContent = fightData.currentFightTotalDamage !== null ? fightData.currentFightTotalDamage.toLocaleString() : '0';
+    currentFightTotalDamageElement.textContent = safeData.currentFightTotalDamage !== null ? safeData.currentFightTotalDamage.toLocaleString() : '0';
   }
+  
   if (lastFightTotalDamageElement) {
-    lastFightTotalDamageElement.textContent = fightData.lastCompletedFightTotalDamage !== null ? fightData.lastCompletedFightTotalDamage.toLocaleString() : '0';
+    lastFightTotalDamageElement.textContent = safeData.lastCompletedFightTotalDamage !== null ? safeData.lastCompletedFightTotalDamage.toLocaleString() : '0';
   }
+  
   if (currentFightersListElement) {
-    currentFightersListElement.innerHTML = createFighterListHTML(fightData.currentFightFighters, fightData.currentFightTotalDamage);
+    currentFightersListElement.innerHTML = createFighterListHTML(safeData.currentFightFighters, safeData.currentFightTotalDamage);
   }
+  
   if (lastFightersListElement) {
-    lastFightersListElement.innerHTML = createFighterListHTML(fightData.lastCompletedFightFighters, fightData.lastCompletedFightTotalDamage);
+    lastFightersListElement.innerHTML = createFighterListHTML(safeData.lastCompletedFightFighters, safeData.lastCompletedFightTotalDamage);
   }
   
   // Re-attach event handlers

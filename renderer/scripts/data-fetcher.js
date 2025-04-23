@@ -35,38 +35,62 @@ export async function fetchLogContent() {
   try {
     const combinedData = await window.electronAPI.getFightIds(selectedFilePath);
     
-    updateFightDisplays({
-      currentFightTotalDamage: combinedData.currentFightTotalDamage,
-      lastCompletedFightTotalDamage: combinedData.lastCompletedFightTotalDamage,
-      currentFightFighters: combinedData.currentFightFighters,
-      lastCompletedFightFighters: combinedData.lastCompletedFightFighters
-    });
+    // Validate data before updating UI
+    const validData = {
+      currentFightTotalDamage: combinedData.currentFightTotalDamage || 0,
+      lastCompletedFightTotalDamage: combinedData.lastCompletedFightTotalDamage || 0,
+      currentFightFighters: Array.isArray(combinedData.currentFightFighters) ? combinedData.currentFightFighters : [],
+      lastCompletedFightFighters: Array.isArray(combinedData.lastCompletedFightFighters) ? combinedData.lastCompletedFightFighters : []
+    };
+    
+    updateFightDisplays(validData);
 
-    updateSessionSummaryDisplay({
-      sessionInfo: combinedData.sessionInfo,
-      sessionFighters: combinedData.sessionFighters
-    }); 
+    const sessionData = {
+      sessionInfo: combinedData.sessionInfo || { totalDamage: 0 },
+      sessionFighters: Array.isArray(combinedData.sessionFighters) ? combinedData.sessionFighters : []
+    };
+    
+    updateSessionSummaryDisplay(sessionData); 
 
   } catch (error) {
-    const currentFightTotalDamageElement = document.getElementById('current-fight-total-damage');
-    const lastFightTotalDamageElement = document.getElementById('last-fight-total-damage');
+    console.error(`Error fetching log content: ${error.message}`);
+    
+    // Try to keep UI responsive even with error - update with empty/default data
+    const defaultData = {
+      currentFightTotalDamage: 0,
+      lastCompletedFightTotalDamage: 0,
+      currentFightFighters: [],
+      lastCompletedFightFighters: []
+    };
+    
+    updateFightDisplays(defaultData);
+    
+    const defaultSessionData = {
+      sessionInfo: { totalDamage: 0 },
+      sessionFighters: []
+    };
+    
+    updateSessionSummaryDisplay(defaultSessionData);
+    
+    // Show error messages in UI
     const currentFightersListElement = document.getElementById('current-fighters-list');
     const lastFightersListElement = document.getElementById('last-fighters-list');
-    
-    if (currentFightTotalDamageElement) currentFightTotalDamageElement.textContent = 'Error';
-    if (lastFightTotalDamageElement) lastFightTotalDamageElement.textContent = 'Error';
-    if (currentFightersListElement) currentFightersListElement.innerHTML = '<p>Error loading fight data.</p>';
-    if (lastFightersListElement) lastFightersListElement.innerHTML = '<p>Error loading fight data.</p>';
-    
-    const screenTitleElement = document.querySelector('#session-summary-screen h2');
-    const totalDamageElement = document.getElementById('session-total-damage');
     const fightersListElement = document.getElementById('session-fighters-list');
     
-    if(screenTitleElement) screenTitleElement.textContent = 'Session Summary - Error';
-    if(totalDamageElement) totalDamageElement.textContent = 'Error';
-    if(fightersListElement) fightersListElement.innerHTML = `<p>Error loading session data: ${error.message}</p>`;
-
-    stopPolling();
+    if (currentFightersListElement) {
+      currentFightersListElement.innerHTML = `<p>Error loading fight data: ${error.message}</p>`;
+    }
+    
+    if (lastFightersListElement) {
+      lastFightersListElement.innerHTML = `<p>Error loading last fight data: ${error.message}</p>`;
+    }
+    
+    if (fightersListElement) {
+      fightersListElement.innerHTML = `<p>Error loading session data: ${error.message}</p>`;
+    }
+    
+    // Don't stop polling automatically - let the user decide
+    // stopPolling();
   }
 }
 

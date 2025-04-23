@@ -189,9 +189,17 @@ async function analyzeLogFile(filePath) {
   function handleFightEnd(endMatch) {
     const endedFightId = parseInt(endMatch[2], 10);
     if (activeFight && activeFight.id === endedFightId) {
-      lastCompletedFight = { ...activeFight, fighters: [...activeFight.fighters] };
+      lastCompletedFight = { 
+        id: endedFightId, 
+        totalDamage: activeFight.totalDamage || 0, 
+        fighters: activeFight.fighters ? [...activeFight.fighters] : [] 
+      };
     } else if (activeFight) {
-      lastCompletedFight = { ...activeFight, id: endedFightId, fighters: [...(activeFight.fighters || [])] };
+      lastCompletedFight = { 
+        id: endedFightId, 
+        totalDamage: activeFight.totalDamage || 0, 
+        fighters: activeFight.fighters ? [...activeFight.fighters] : [] 
+      };
     } else {
       lastCompletedFight = { id: endedFightId, totalDamage: 0, fighters: [] };
     }
@@ -318,16 +326,21 @@ async function analyzeLogFile(filePath) {
         spellDamage: fighter.spellDamage || {}
       })).sort((a, b) => b.damageDealt - a.damageDealt) : [];
 
-      const finalLastCompletedFighters = lastCompletedFight.fighters ? [...lastCompletedFight.fighters] : [];
-      const finalCurrentFighters = currentFight.id && activeFight ? [...activeFight.fighters] : (currentFight.fighters || []);
+      // Ensure last completed fight data is properly formatted
+      const finalLastCompletedFighters = lastCompletedFight && lastCompletedFight.fighters ? 
+        lastCompletedFight.fighters.filter(f => f && typeof f === 'object') : [];
+      
+      const finalCurrentFighters = currentFight && currentFight.id && activeFight ? 
+        activeFight.fighters.filter(f => f && typeof f === 'object') : 
+        (currentFight && currentFight.fighters ? currentFight.fighters.filter(f => f && typeof f === 'object') : []);
 
       resolve({
         lastCompletedFightId: lastCompletedFight.id,
-        lastCompletedFightTotalDamage: lastCompletedFight.totalDamage,
+        lastCompletedFightTotalDamage: lastCompletedFight.totalDamage || 0,
         lastCompletedFightFighters: finalLastCompletedFighters,
         currentFightId: currentFight.id,
         currentFightStartTime: currentFight.startTime,
-        currentFightTotalDamage: currentFight.totalDamage,
+        currentFightTotalDamage: currentFight.totalDamage || 0,
         currentFightFighters: finalCurrentFighters,
         sessionInfo: sessionInfo,
         sessionFighters: sessionFighters
