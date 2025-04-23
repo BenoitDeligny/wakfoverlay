@@ -191,7 +191,10 @@ export function setupFighterItemClickHandlers() {
         if (fighterItem) {
           const fighterId = fighterItem.getAttribute('data-fighter-id');
           
-          // Toggle expanded state
+          // Force layout recalculation to prevent any animation or resize issues
+          document.body.offsetHeight;
+          
+          // Toggle expanded state immediately
           if (fighterItem.classList.contains('expanded')) {
             fighterItem.classList.remove('expanded');
             window.expandedFighters.delete(fighterId);
