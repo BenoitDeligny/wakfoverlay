@@ -12,12 +12,35 @@ function createSpellDamageDetailsHTML(fighter) {
     `;
   }
 
-  // Sort spells by damage (highest first)
-  const sortedSpells = Object.entries(fighter.spellDamage)
-    .filter(([_, damage]) => damage > 0)
-    .sort((a, b) => b[1] - a[1]);
+  // Helper function to get color variable based on element
+  const getElementColor = (element) => {
+    switch(element) {
+      case 'fire': return 'var(--color-element-fire)';
+      case 'water': return 'var(--color-element-water)';
+      case 'earth': return 'var(--color-element-earth)';
+      case 'air': return 'var(--color-element-air)';
+      case 'status': return 'var(--color-element-status)';
+      default: return 'var(--color-element-neutral)';
+    }
+  };
+
+  // Extract and format spell data
+  const spellData = Object.entries(fighter.spellDamage)
+    .map(([spellName, spellInfo]) => {
+      // Handle both new and old data format
+      const damage = typeof spellInfo === 'object' ? (spellInfo.damage || 0) : spellInfo || 0;
+      const element = typeof spellInfo === 'object' ? (spellInfo.element || 'neutral') : 'neutral';
+      
+      return {
+        name: spellName,
+        damage: damage,
+        element: element
+      };
+    })
+    .filter(spell => spell.damage > 0)
+    .sort((a, b) => b.damage - a.damage);
   
-  if (sortedSpells.length === 0) {
+  if (spellData.length === 0) {
     return `
       <div class="spell-item">
         <span class="spell-name">No damage spells recorded</span>
@@ -27,15 +50,17 @@ function createSpellDamageDetailsHTML(fighter) {
     `;
   }
   
-  const fighterDamage = fighter.damageDealt || sortedSpells.reduce((sum, [_, damage]) => sum + damage, 0);
+  const fighterDamage = fighter.damageDealt || spellData.reduce((sum, spell) => sum + spell.damage, 0);
   
   let html = '';
-  sortedSpells.forEach(([spellName, damage]) => {
-    const percentage = fighterDamage > 0 ? ((damage / fighterDamage) * 100).toFixed(1) : 0;
+  spellData.forEach(spell => {
+    const percentage = fighterDamage > 0 ? ((spell.damage / fighterDamage) * 100).toFixed(1) : 0;
+    const elementColor = getElementColor(spell.element);
+    
     html += `
       <div class="spell-item">
-        <span class="spell-name">${spellName || 'Unknown Spell'}</span>
-        <span class="spell-damage">${damage.toLocaleString()}</span>
+        <span class="spell-name" style="color: ${elementColor}">${spell.name || 'Unknown Spell'}</span>
+        <span class="spell-damage" style="color: ${elementColor}">${spell.damage.toLocaleString()}</span>
         <span class="spell-percent">(${percentage}%)</span>
       </div>
     `;
@@ -93,7 +118,6 @@ export function createFighterListHTML(fighters, totalFightDamage) {
       </div>
       <div class="fighter-details">
         <div class="spell-damage-info">
-          <p>Spell damages:</p>
           <div class="spell-list">
             ${createSpellDamageDetailsHTML(fighter)}
           </div>

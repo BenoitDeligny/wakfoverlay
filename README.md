@@ -2,6 +2,7 @@
 
 TODO
 - deduplicate logs
-- color of text for spells = element (red for fire, blue for water, ...)
+- color of text for spells = change colors and add elements
+- log are displaying "status effect" for DoT --> we want the reality
 - healing
 - armor

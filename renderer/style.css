@@ -11,6 +11,14 @@
   --color-accent-yellow: #ff0;
   --color-accent-blue: #0af;
   
+  /* Element Colors */
+  --color-element-fire: #ff5555;
+  --color-element-water: #55aaff;
+  --color-element-earth: #aa7744;
+  --color-element-air: #aaffee;
+  --color-element-neutral: rgba(180, 220, 255, 0.95);
+  --color-element-status: #aa55aa;
+  
   /* Background Colors */
   --bg-menu: rgba(35, 35, 50, 0.98);
   --bg-screen: rgba(30, 35, 50, 0.3);
