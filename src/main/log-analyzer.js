@@ -15,6 +15,10 @@ async function analyzeLogFile(filePath) {
   let lastSpellCast = null;
   let lastSpellElement = "neutre";
 
+  // Track recent damage events to prevent duplicates
+  const recentDamageEvents = [];
+  const DEDUPLICATION_WINDOW_MS = 1000; // 2 seconds window for deduplication
+
   let sessionList = [];
   let currentSessionData = null;
 
@@ -87,6 +91,9 @@ async function analyzeLogFile(filePath) {
     lastAttackerName = null;
     lastSpellCast = null;
     lastSpellElement = "neutre";
+    
+    // Clear recent damage events when a new fight starts
+    recentDamageEvents.length = 0;
   }
 
   function handleFighterJoin(fighterMatch) {
@@ -151,7 +158,45 @@ async function analyzeLogFile(filePath) {
     lastSpellElement = spellElementTypeMap[rawElementType] || "neutre";
   }
 
-  function handleDamage(damageMatch) {
+  function timeStringToMilliseconds(timeString) {
+    const [hours, minutes, secondsAndMillis] = timeString.split(':');
+    const [seconds, milliseconds] = secondsAndMillis.split(',');
+    
+    return (parseInt(hours, 10) * 3600000) + 
+           (parseInt(minutes, 10) * 60000) + 
+           (parseInt(seconds, 10) * 1000) + 
+           parseInt(milliseconds, 10);
+  }
+
+  function isDuplicateDamageEvent(time, targetName, damageAmount, context) {
+    const currentTimeMs = timeStringToMilliseconds(time);
+    const eventKey = `${targetName}:${damageAmount}:${context}`;
+    
+    // Check for any matching events within the deduplication window
+    const isDuplicate = recentDamageEvents.some(event => {
+      const timeDiff = Math.abs(currentTimeMs - event.timeMs);
+      return timeDiff < DEDUPLICATION_WINDOW_MS && event.key === eventKey;
+    });
+    
+    // Add current event to recent events
+    recentDamageEvents.push({
+      timeMs: currentTimeMs,
+      key: eventKey,
+      time
+    });
+    
+    // Keep the list manageable by removing old events
+    // Only keep events from the last 10 seconds to prevent memory issues
+    const maxAgeMs = 10000;
+    while (recentDamageEvents.length > 0 && 
+           Math.abs(currentTimeMs - recentDamageEvents[0].timeMs) > maxAgeMs) {
+      recentDamageEvents.shift();
+    }
+    
+    return isDuplicate;
+  }
+
+  function handleDamage(damageMatch, timestamp) {
     if (!activeFight) return;
     const targetName = damageMatch[1].trim();
     const damageString = damageMatch[2].replace(/\s/g, '');
@@ -159,6 +204,11 @@ async function analyzeLogFile(filePath) {
     const damageSourceContext = damageMatch[3];
 
     if (isNaN(damageAmount)) return;
+    
+    // Check if this is a duplicate damage event
+    if (isDuplicateDamageEvent(timestamp, targetName, damageAmount, damageSourceContext)) {
+      return; // Skip duplicate damage events
+    }
     
     activeFight.totalDamage += damageAmount;
     if (currentFight.id === activeFight.id) {
@@ -258,6 +308,8 @@ async function analyzeLogFile(filePath) {
       });
     }
 
+    // Clear recent damage events when a fight ends
+    recentDamageEvents.length = 0;
     activeFight = null;
     currentFight = { id: null, startTime: null, totalDamage: 0, fighters: [] };
     lastAttackerName = null;
@@ -330,8 +382,8 @@ async function analyzeLogFile(filePath) {
           handleSpellElement(spellElementMatch);
       } else if (statusMatch && activeFight) {
           handleStatus(statusMatch);
-      } else if (damageMatch) {
-          handleDamage(damageMatch);
+      } else if (damageMatch && timestamp) {
+          handleDamage(damageMatch, timestamp);
       } else if (fightEndMatch) {
           handleFightEnd(fightEndMatch);
       }
