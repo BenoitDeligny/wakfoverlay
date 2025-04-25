@@ -290,4 +290,102 @@ export function setupFighterItemClickHandlers() {
       });
     }
   });
+}
+
+/**
+ * Creates HTML for damage statistics display
+ */
+export function createDamageStatsHTML(fighters, totalDamage) {
+  // Safety check for input data
+  if (!fighters || !Array.isArray(fighters) || fighters.length === 0) {
+    return '<p>No fighter data available.</p>';
+  }
+
+  // Filter out fighters with no damage and ensure they have the expected properties
+  const validFighters = fighters.filter(fighter => 
+    fighter && 
+    typeof fighter === 'object' && 
+    (fighter.damageDealt || 0) > 0
+  );
+  
+  if (validFighters.length === 0) {
+    return '<p>No damage dealt by players.</p>';
+  }
+
+  // Ensure totalDamage is a number
+  const safeTotalDamage = typeof totalDamage === 'number' ? totalDamage : 
+    validFighters.reduce((sum, fighter) => sum + (fighter.damageDealt || 0), 0);
+
+  // Sort fighters by damage
+  validFighters.sort((a, b) => (b.damageDealt || 0) - (a.damageDealt || 0));
+
+  // Find the highest damage to calculate relative bar widths
+  const highestDamage = validFighters[0].damageDealt || 0;
+
+  let html = '';
+  validFighters.forEach((fighter, index) => {
+    const damage = fighter.damageDealt || 0;
+    const name = fighter.name || `Fighter ${index+1}`;
+    const rank = index + 1;
+    const barWidth = highestDamage > 0 ? (damage / highestDamage) * 100 : 0;
+    
+    html += `
+      <div class="damage-stat-row rank-${rank}">
+        <div class="damage-stat-bar" style="width: ${barWidth}%"></div>
+        <div class="damage-stat-icon">${rank}</div>
+        <div class="damage-stat-info">
+          <div class="damage-stat-name">${name}</div>
+        </div>
+        <div class="damage-stat-number">${damage.toLocaleString()}</div>
+      </div>
+    `;
+  });
+  
+  return html;
+}
+
+/**
+ * Updates the damage statistics window with the latest data
+ */
+export function updateDamageStatsWindow(fightData) {
+  // Get the current active screen to determine which fight data to show
+  const activeScreen = document.querySelector('.screen.active');
+  if (!activeScreen) return;
+  
+  let fighters = [];
+  let totalDamage = 0;
+  let source = 'current';
+  
+  // Determine which fighters to display based on the active screen
+  if (activeScreen.id === 'fight-screen') {
+    fighters = fightData.currentFightFighters || [];
+    totalDamage = fightData.currentFightTotalDamage || 0;
+    source = 'current';
+  } else if (activeScreen.id === 'last-fight-screen') {
+    fighters = fightData.lastCompletedFightFighters || [];
+    totalDamage = fightData.lastCompletedFightTotalDamage || 0;
+    source = 'last';
+  } else if (activeScreen.id === 'session-summary-screen') {
+    fighters = fightData.sessionFighters || [];
+    totalDamage = fightData.sessionInfo?.totalDamage || 0;
+    source = 'session';
+  }
+  
+  // Send data to the damage stats window
+  window.electronAPI.updateDamageStats({
+    fighters,
+    totalDamage,
+    source
+  });
+}
+
+/**
+ * Shows or hides the damage statistics window
+ */
+export function toggleDamageStatsWindow(show) {
+  if (show) {
+    window.electronAPI.openDamageStatsWindow();
+  } else {
+    window.electronAPI.closeDamageStatsWindow();
+  }
 } 

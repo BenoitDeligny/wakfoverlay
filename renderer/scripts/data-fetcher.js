@@ -1,4 +1,4 @@
-import { updateFightDisplays, updateSessionSummaryDisplay } from './ui-manager.js';
+import { updateFightDisplays, updateSessionSummaryDisplay, updateDamageStatsWindow } from './ui-manager.js';
 
 let pollInterval = null;
 let selectedFilePath = null;
@@ -40,17 +40,23 @@ export async function fetchLogContent() {
       currentFightTotalDamage: combinedData.currentFightTotalDamage || 0,
       lastCompletedFightTotalDamage: combinedData.lastCompletedFightTotalDamage || 0,
       currentFightFighters: Array.isArray(combinedData.currentFightFighters) ? combinedData.currentFightFighters : [],
-      lastCompletedFightFighters: Array.isArray(combinedData.lastCompletedFightFighters) ? combinedData.lastCompletedFightFighters : []
+      lastCompletedFightFighters: Array.isArray(combinedData.lastCompletedFightFighters) ? combinedData.lastCompletedFightFighters : [],
+      sessionFighters: Array.isArray(combinedData.sessionFighters) ? combinedData.sessionFighters : [],
+      sessionInfo: combinedData.sessionInfo || { totalDamage: 0 }
     };
     
     updateFightDisplays(validData);
 
     const sessionData = {
-      sessionInfo: combinedData.sessionInfo || { totalDamage: 0 },
-      sessionFighters: Array.isArray(combinedData.sessionFighters) ? combinedData.sessionFighters : []
+      sessionInfo: validData.sessionInfo,
+      sessionFighters: validData.sessionFighters
     };
     
-    updateSessionSummaryDisplay(sessionData); 
+    updateSessionSummaryDisplay(sessionData);
+    
+    // Always update the damage stats window if it exists
+    // The window-manager will take care of checking if the window exists
+    updateDamageStatsWindow(validData);
 
   } catch (error) {
     console.error(`Error fetching log content: ${error.message}`);
@@ -60,7 +66,9 @@ export async function fetchLogContent() {
       currentFightTotalDamage: 0,
       lastCompletedFightTotalDamage: 0,
       currentFightFighters: [],
-      lastCompletedFightFighters: []
+      lastCompletedFightFighters: [],
+      sessionFighters: [],
+      sessionInfo: { totalDamage: 0 }
     };
     
     updateFightDisplays(defaultData);
@@ -72,25 +80,8 @@ export async function fetchLogContent() {
     
     updateSessionSummaryDisplay(defaultSessionData);
     
-    // Show error messages in UI
-    const currentFightersListElement = document.getElementById('current-fighters-list');
-    const lastFightersListElement = document.getElementById('last-fighters-list');
-    const fightersListElement = document.getElementById('session-fighters-list');
-    
-    if (currentFightersListElement) {
-      currentFightersListElement.innerHTML = `<p>Error loading fight data: ${error.message}</p>`;
-    }
-    
-    if (lastFightersListElement) {
-      lastFightersListElement.innerHTML = `<p>Error loading last fight data: ${error.message}</p>`;
-    }
-    
-    if (fightersListElement) {
-      fightersListElement.innerHTML = `<p>Error loading session data: ${error.message}</p>`;
-    }
-    
-    // Don't stop polling automatically - let the user decide
-    // stopPolling();
+    // Update damage stats window with default data
+    updateDamageStatsWindow(defaultData);
   }
 }
 
@@ -126,4 +117,4 @@ export function getSelectedFilePath() {
  */
 export function setSelectedFilePath(filePath) {
   selectedFilePath = filePath;
-} 
+}

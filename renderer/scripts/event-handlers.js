@@ -1,5 +1,5 @@
-import { showScreen, updateBodyOpacity, setupFighterItemClickHandlers } from './ui-manager.js';
-import { startPolling, selectAndProcessFile, setSelectedFilePath } from './data-fetcher.js';
+import { showScreen, updateBodyOpacity, setupFighterItemClickHandlers, toggleDamageStatsWindow, updateDamageStatsWindow } from './ui-manager.js';
+import { startPolling, selectAndProcessFile, setSelectedFilePath, fetchLogContent } from './data-fetcher.js';
 
 /**
  * Sets up all event handlers for the application
@@ -42,6 +42,12 @@ export function setupEventHandlers() {
       event.preventDefault();
       const targetId = link.getAttribute('data-target');
       showScreen(targetId);
+      
+      // Update damage stats window if it's visible
+      if (!document.getElementById('damage-stats-window').classList.contains('hidden')) {
+        // Re-fetch content to update the damage stats window
+        fetchLogContent();
+      }
     });
   });
 
@@ -51,6 +57,25 @@ export function setupEventHandlers() {
     alwaysOnTopCheckbox.addEventListener('change', (event) => {
       const isChecked = event.target.checked;
       window.electronAPI.toggleAlwaysOnTop(isChecked);
+    });
+  }
+  
+  // Damage stats toggle
+  const damageStatsCheckbox = document.getElementById('damage-stats-checkbox');
+  if (damageStatsCheckbox) {
+    damageStatsCheckbox.addEventListener('change', (event) => {
+      const isChecked = event.target.checked;
+      toggleDamageStatsWindow(isChecked);
+      
+      // Update damage stats window content when toggled on
+      if (isChecked) {
+        fetchLogContent();
+      }
+    });
+    
+    // Update checkbox when damage stats window is closed externally
+    window.electronAPI.onDamageStatsWindowClosed(() => {
+      damageStatsCheckbox.checked = false;
     });
   }
 
@@ -89,4 +114,53 @@ export function setupEventHandlers() {
 
   // Fighter list item click handlers
   setupFighterItemClickHandlers();
+}
+
+/**
+ * Sets up draggable functionality for an element
+ */
+function setupDraggableElement(element, handleElement) {
+  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  
+  if (handleElement) {
+    // If a handle is provided, attach mousedown event to the handle only
+    handleElement.onmousedown = dragMouseDown;
+  } else {
+    // Otherwise, attach mousedown event to the element itself
+    element.onmousedown = dragMouseDown;
+  }
+
+  function dragMouseDown(e) {
+    e = e || window.event;
+    e.preventDefault();
+    
+    // Get the mouse cursor position at startup
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    
+    // Attach the mousemove and mouseup events to document
+    document.onmouseup = closeDragElement;
+    document.onmousemove = elementDrag;
+  }
+
+  function elementDrag(e) {
+    e = e || window.event;
+    e.preventDefault();
+    
+    // Calculate the new cursor position
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    
+    // Set the element's new position
+    element.style.top = (element.offsetTop - pos2) + "px";
+    element.style.left = (element.offsetLeft - pos1) + "px";
+  }
+
+  function closeDragElement() {
+    // Stop moving when mouse button is released
+    document.onmouseup = null;
+    document.onmousemove = null;
+  }
 } 

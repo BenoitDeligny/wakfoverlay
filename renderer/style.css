@@ -741,3 +741,308 @@ input:checked + .slider:before {
 *:hover {
   scrollbar-color: rgba(0, 255, 255, 0.5) rgba(30, 35, 60, 0.3);
 }
+
+/* Damage Statistics Window */
+#damage-stats-window {
+  position: fixed;
+  top: 100px;
+  left: 100px;
+  width: 450px;
+  max-height: 300px;
+  background-color: rgba(35, 35, 50, 0.95);
+  border: 1px solid var(--border-accent-cyan);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease-out;
+  overflow: hidden;
+  resize: both;
+}
+
+#damage-stats-window.hidden {
+  display: none;
+}
+
+.damage-stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: linear-gradient(to right, rgba(0, 150, 255, 0.15), rgba(0, 200, 255, 0.25), rgba(0, 150, 255, 0.15));
+  border-bottom: 1px solid var(--border-accent-blue);
+  cursor: move;
+  user-select: none;
+}
+
+.damage-stats-header h2 {
+  margin: 0;
+  color: var(--color-accent-cyan);
+  font-size: var(--font-size-large);
+  text-shadow: var(--text-shadow-cyan);
+}
+
+#damage-stats-close {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+#damage-stats-close:hover {
+  opacity: 1;
+}
+
+#damage-stats-close::before,
+#damage-stats-close::after {
+  position: absolute;
+  content: '';
+  width: 16px;
+  height: 2px;
+  background-color: var(--color-accent-cyan);
+  top: 7px;
+  left: 0;
+}
+
+#damage-stats-close::before {
+  transform: rotate(45deg);
+}
+
+#damage-stats-close::after {
+  transform: rotate(-45deg);
+}
+
+#damage-stats-content {
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.damage-stat-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: rgba(40, 45, 70, 0.35);
+  position: relative;
+  height: 32px;
+}
+
+.damage-stat-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.3);
+  margin-right: var(--spacing-sm);
+}
+
+.damage-stat-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  z-index: 10;
+  padding: 0 var(--spacing-md);
+}
+
+.damage-stat-name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fighter-name);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.damage-stat-number {
+  position: absolute;
+  right: var(--spacing-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.damage-stat-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  z-index: 5;
+}
+
+.rank-1 .damage-stat-bar {
+  background-color: rgba(255, 215, 0, 0.25);
+}
+
+.rank-2 .damage-stat-bar {
+  background-color: rgba(192, 192, 192, 0.25);
+}
+
+.rank-3 .damage-stat-bar {
+  background-color: rgba(205, 127, 50, 0.25);
+}
+
+.rank-4 .damage-stat-bar {
+  background-color: rgba(64, 142, 255, 0.25);
+}
+
+.rank-5 .damage-stat-bar {
+  background-color: rgba(50, 205, 50, 0.25);
+}
+
+.rank-6 .damage-stat-bar {
+  background-color: rgba(114, 47, 207, 0.25);
+}
+
+.rank-7 .damage-stat-bar {
+  background-color: rgba(188, 38, 41, 0.25);
+}
+
+.rank-8 .damage-stat-bar {
+  background-color: rgba(169, 169, 169, 0.25);
+}
+
+.rank-9 .damage-stat-bar {
+  background-color: rgba(127, 127, 127, 0.25);
+}
+
+.rank-10 .damage-stat-bar {
+  background-color: rgba(70, 130, 180, 0.25);
+}
+
+.rank-11 .damage-stat-bar,
+.rank-12 .damage-stat-bar {
+  background-color: rgba(60, 60, 60, 0.25);
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Damage Stats Window (Standalone) */
+.damage-stats-body {
+  background-color: rgba(35, 35, 50, 0.95);
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.damage-stats-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  border: 1px solid var(--border-accent-cyan);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Damage Stats reduced sizing */
+.damage-stats-body .damage-stats-header {
+  padding: 5px 7px;
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+}
+
+.damage-stats-body .damage-stats-header h2 {
+  margin: 0;
+  color: var(--color-accent-cyan);
+  font-size: 0.6em;
+  text-shadow: var(--text-shadow-cyan);
+}
+
+.damage-stats-body #damage-stats-close {
+  width: 8px;
+  height: 8px;
+  -webkit-app-region: no-drag;
+  position: relative;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.damage-stats-body #damage-stats-close:hover {
+  opacity: 1;
+}
+
+.damage-stats-body #damage-stats-close::before,
+.damage-stats-body #damage-stats-close::after {
+  width: 8px;
+  height: 1px;
+  top: 4px;
+  position: absolute;
+  content: '';
+  background-color: var(--color-accent-cyan);
+}
+
+.damage-stats-body #damage-stats-close::before {
+  transform: rotate(45deg);
+}
+
+.damage-stats-body #damage-stats-close::after {
+  transform: rotate(-45deg);
+}
+
+.damage-stats-body #damage-stats-content {
+  padding: 7px;
+  overflow-y: auto;
+  flex-grow: 1;
+  height: calc(100% - 25px);
+  min-height: 0;
+  -webkit-app-region: no-drag;
+}
+
+.damage-stats-body .damage-stat-row {
+  margin-bottom: 5px;
+  border-radius: 2px;
+  height: 16px;
+}
+
+.damage-stats-body .damage-stat-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  font-size: 0.6em;
+}
+
+.damage-stats-body .damage-stat-info {
+  padding: 0 5px;
+}
+
+.damage-stats-body .damage-stat-name {
+  font-size: 0.6em;
+}
+
+.damage-stats-body .damage-stat-number {
+  right: 5px;
+  font-size: 0.6em;
+}
+
+/* Apply small scrollbar for the damage stats window */
+.damage-stats-body::-webkit-scrollbar,
+.damage-stats-body *::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.damage-stats-body::-webkit-scrollbar-thumb,
+.damage-stats-body *::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.damage-stats-body::-webkit-scrollbar-thumb:hover,
+.damage-stats-body *::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 255, 0.5);
+}

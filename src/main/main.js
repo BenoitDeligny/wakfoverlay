@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 
-const { createWindow, getMainWindow } = require('./window-manager');
+const { createWindow, getMainWindow, createDamageStatsWindow, getDamageStatsWindow, sendToDamageStatsWindow } = require('./window-manager');
 const { analyzeLogFile } = require('./log-analyzer');
 const { saveLastFile, loadLastFile } = require('./utils');
 
@@ -20,6 +20,24 @@ app.whenReady().then(async () => {
     if (mainWindow) {
       mainWindow.setAlwaysOnTop(isAlwaysOnTop);
     }
+  });
+
+  // Handle opening the damage stats window
+  ipcMain.on('open-damage-stats-window', (event) => {
+    createDamageStatsWindow();
+  });
+
+  // Handle closing the damage stats window
+  ipcMain.on('close-damage-stats-window', (event) => {
+    const damageStatsWindow = getDamageStatsWindow();
+    if (damageStatsWindow) {
+      damageStatsWindow.close();
+    }
+  });
+
+  // Handle updating the damage stats window
+  ipcMain.on('update-damage-stats', (event, data) => {
+    sendToDamageStatsWindow('damage-stats-update', data);
   });
 
   ipcMain.handle('select-file', async (event) => {
@@ -65,6 +83,14 @@ app.whenReady().then(async () => {
   });
 
   const createdWindow = createWindow();
+
+  // Close damage stats window when main window is closed
+  createdWindow.on('closed', () => {
+    const damageStatsWindow = getDamageStatsWindow();
+    if (damageStatsWindow && !damageStatsWindow.isDestroyed()) {
+      damageStatsWindow.close();
+    }
+  });
 
   const lastFilePath = await loadLastFile();
   if (lastFilePath) {
