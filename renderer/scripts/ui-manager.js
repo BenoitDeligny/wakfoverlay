@@ -15,9 +15,9 @@ function createSpellDamageDetailsHTML(fighter) {
   // Helper function to get color variable based on element
   const getElementColor = (element) => {
     switch(element) {
-      case 'fire': return 'var(--color-element-fire)';
-      case 'water': return 'var(--color-element-water)';
-      case 'earth': return 'var(--color-element-earth)';
+      case 'feu': return 'var(--color-element-fire)';
+      case 'eau': return 'var(--color-element-water)';
+      case 'terre': return 'var(--color-element-earth)';
       case 'air': return 'var(--color-element-air)';
       case 'status': return 'var(--color-element-status)';
       default: return 'var(--color-element-neutral)';
@@ -29,7 +29,7 @@ function createSpellDamageDetailsHTML(fighter) {
     .map(([spellName, spellInfo]) => {
       // Handle both new and old data format
       const damage = typeof spellInfo === 'object' ? (spellInfo.damage || 0) : spellInfo || 0;
-      const element = typeof spellInfo === 'object' ? (spellInfo.element || 'neutral') : 'neutral';
+      const element = typeof spellInfo === 'object' ? (spellInfo.element || 'neutre') : 'neutre';
       
       return {
         name: spellName,

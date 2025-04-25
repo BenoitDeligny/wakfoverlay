@@ -13,11 +13,11 @@
   
   /* Element Colors */
   --color-element-fire: #ff5555;
-  --color-element-water: #55aaff;
-  --color-element-earth: #aa7744;
-  --color-element-air: #aaffee;
-  --color-element-neutral: rgba(180, 220, 255, 0.95);
-  --color-element-status: #aa55aa;
+  --color-element-water: #2e93f8;
+  --color-element-earth: #80460d;
+  --color-element-air: #0ee9bd;
+  --color-element-neutral: rgb(255, 255, 255);
+  --color-element-status: #a712a7;
   
   /* Background Colors */
   --bg-menu: rgba(35, 35, 50, 0.98);

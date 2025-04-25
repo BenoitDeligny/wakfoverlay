@@ -13,7 +13,7 @@ async function analyzeLogFile(filePath) {
   let lineNumber = 0;
   let lastAttackerName = null;
   let lastSpellCast = null;
-  let lastSpellElement = "neutral"; // Default element
+  let lastSpellElement = "neutre";
 
   let sessionList = [];
   let currentSessionData = null;
@@ -63,10 +63,10 @@ async function analyzeLogFile(filePath) {
   };
 
   const spellElementTypeMap = {
-    "NEUTRAL": "neutral",
-    "FIRE": "fire",
-    "WATER": "water",
-    "EARTH": "earth",
+    "NEUTRE": "neutre",
+    "FEU": "feu",
+    "EAU": "eau",
+    "TERRE": "terre",
     "AIR": "air",
     "STATUS": "status"
   };
@@ -86,7 +86,7 @@ async function analyzeLogFile(filePath) {
     currentFight = { id: null, startTime: null, totalDamage: 0, fighters: [] };
     lastAttackerName = null;
     lastSpellCast = null;
-    lastSpellElement = "neutral";
+    lastSpellElement = "neutre";
   }
 
   function handleFighterJoin(fighterMatch) {
@@ -148,7 +148,7 @@ async function analyzeLogFile(filePath) {
   function handleSpellElement(elementMatch) {
     if (!activeFight) return;
     const rawElementType = elementMatch[1].trim().toUpperCase();
-    lastSpellElement = spellElementTypeMap[rawElementType] || "neutral";
+    lastSpellElement = spellElementTypeMap[rawElementType] || "neutre";
   }
 
   function handleDamage(damageMatch) {
@@ -248,7 +248,7 @@ async function analyzeLogFile(filePath) {
                   if (!currentSessionData.fighters[name].spellDamage[spellName]) {
                     currentSessionData.fighters[name].spellDamage[spellName] = {
                       damage: 0,
-                      element: spellInfo.element || "neutral"
+                      element: spellInfo.element || "neutre"
                     };
                   }
                   currentSessionData.fighters[name].spellDamage[spellName].damage += spellInfo.damage || 0;
@@ -262,7 +262,7 @@ async function analyzeLogFile(filePath) {
     currentFight = { id: null, startTime: null, totalDamage: 0, fighters: [] };
     lastAttackerName = null;
     lastSpellCast = null;
-    lastSpellElement = "neutral";
+    lastSpellElement = "neutre";
   }
 
   return new Promise((resolve, reject) => {
