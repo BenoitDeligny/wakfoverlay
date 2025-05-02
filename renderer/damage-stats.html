@@ -3,14 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Damage Statistics</title>
+  <title>Wakfu Damage Overlay</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="damage-stats-body">
   <div class="damage-stats-container">
     <div class="damage-stats-header">
-      <h2>Damage Statistics</h2>
-      <div id="damage-stats-close" style="cursor: pointer; padding: 2px;"></div>
+      <div class="damage-stats-controls" style="-webkit-app-region: no-drag;">
+        <div id="file-select-btn" class="control-btn" title="Select Log File" style="-webkit-app-region: no-drag;">📂</div>
+        <div id="toggle-top-btn" class="control-btn" title="Toggle Always on Top" style="-webkit-app-region: no-drag;">📌</div>
+      </div>
+      <h2>Damage Statistics <span id="combat-status" class="combat-inactive" title="Combat status"></span></h2>
+      <div id="damage-stats-close" class="control-btn" title="Close" style="-webkit-app-region: no-drag;">✕</div>
     </div>
     <div id="damage-stats-content"></div>
   </div>

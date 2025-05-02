@@ -1,8 +1,8 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, globalShortcut } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 
-const { createWindow, getMainWindow, createDamageStatsWindow, getDamageStatsWindow, sendToDamageStatsWindow } = require('./window-manager');
+const { createDamageStatsWindow, getDamageStatsWindow, sendToDamageStatsWindow, ensureOnTop } = require('./window-manager');
 const { analyzeLogFile } = require('./log-analyzer');
 const { saveLastFile, loadLastFile } = require('./utils');
 
@@ -16,22 +16,13 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.on('toggle-always-on-top', (event, isAlwaysOnTop) => {
-    const mainWindow = getMainWindow();
-    if (mainWindow) {
-      mainWindow.setAlwaysOnTop(isAlwaysOnTop);
-    }
-  });
-
-  // Handle opening the damage stats window
-  ipcMain.on('open-damage-stats-window', (event) => {
-    createDamageStatsWindow();
-  });
-
-  // Handle closing the damage stats window
-  ipcMain.on('close-damage-stats-window', (event) => {
     const damageStatsWindow = getDamageStatsWindow();
     if (damageStatsWindow) {
-      damageStatsWindow.close();
+      if (isAlwaysOnTop) {
+        damageStatsWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+      } else {
+        damageStatsWindow.setAlwaysOnTop(false);
+      }
     }
   });
 
@@ -82,28 +73,25 @@ app.whenReady().then(async () => {
     }
   });
 
-  const createdWindow = createWindow();
-
-  // Close damage stats window when main window is closed
-  createdWindow.on('closed', () => {
-    const damageStatsWindow = getDamageStatsWindow();
-    if (damageStatsWindow && !damageStatsWindow.isDestroyed()) {
-      damageStatsWindow.close();
-    }
+  // Create the damage stats window as the main window
+  const window = createDamageStatsWindow();
+  
+  // Register a global shortcut to bring the window to front
+  globalShortcut.register('CommandOrControl+Shift+D', () => {
+    ensureOnTop();
   });
-
+  
   const lastFilePath = await loadLastFile();
   if (lastFilePath) {
-    createdWindow.webContents.on('did-finish-load', () => {
-      createdWindow.webContents.send('load-file', lastFilePath);
+    window.webContents.on('did-finish-load', () => {
+      window.webContents.send('load-file', lastFilePath);
     });
   }
+});
 
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-    }
-  });
+app.on('will-quit', () => {
+  // Unregister the shortcut before quitting
+  globalShortcut.unregisterAll();
 });
 
 app.on('window-all-closed', function () {

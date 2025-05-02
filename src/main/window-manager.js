@@ -1,49 +1,28 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
 
-let mainWindow = null;
 let damageStatsWindow = null;
 
 /**
- * Creates the main application window
- */
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 400,
-    height: 600,
-    transparent: true, 
-    frame: false, 
-    webPreferences: {
-      preload: path.join(__dirname, '..', 'preload', 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false 
-    }
-  });
-
-  mainWindow.loadFile('renderer/index.html');
-  
-  return mainWindow;
-}
-
-/**
- * Creates a damage stats window
+ * Creates a damage stats window as the main application window
  */
 function createDamageStatsWindow() {
   // If the window already exists, just show it
   if (damageStatsWindow) {
     damageStatsWindow.show();
+    damageStatsWindow.setAlwaysOnTop(true, 'screen-saver', 1);
     return damageStatsWindow;
   }
   
   // Create a new window
   damageStatsWindow = new BrowserWindow({
-    width: 225,
-    height: 150,
+    width: 350,
+    height: 200,
     transparent: true,
     frame: false,
-    parent: mainWindow,
     show: false,
     alwaysOnTop: true,
+    skipTaskbar: true,
     resizable: true,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
@@ -52,8 +31,8 @@ function createDamageStatsWindow() {
     }
   });
   
-  // Make sure the window stays on top of all other windows
-  damageStatsWindow.setAlwaysOnTop(true, 'screen-saver');
+  // Make sure the window stays on top of all other windows with highest priority level
+  damageStatsWindow.setAlwaysOnTop(true, 'screen-saver', 1);
   
   // Enable scrolling in the window
   damageStatsWindow.webContents.on('did-finish-load', () => {
@@ -62,27 +41,19 @@ function createDamageStatsWindow() {
   
   damageStatsWindow.loadFile('renderer/damage-stats.html');
   
-  // When the window is closed, remove the reference and notify the main window
-  damageStatsWindow.on('closed', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('damage-stats-window-closed');
-    }
-    damageStatsWindow = null;
-  });
-  
   // Show the window when it's ready
   damageStatsWindow.once('ready-to-show', () => {
     damageStatsWindow.show();
+    // Apply always on top again, to be sure
+    damageStatsWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+  });
+  
+  // Restore always-on-top when the window gains focus
+  damageStatsWindow.on('focus', () => {
+    damageStatsWindow.setAlwaysOnTop(true, 'screen-saver', 1);
   });
   
   return damageStatsWindow;
-}
-
-/**
- * Get the main window instance
- */
-function getMainWindow() {
-  return mainWindow;
 }
 
 /**
@@ -101,10 +72,20 @@ function sendToDamageStatsWindow(channel, data) {
   }
 }
 
+/**
+ * Ensures the damage stats window is visible and on top
+ */
+function ensureOnTop() {
+  if (damageStatsWindow && !damageStatsWindow.isDestroyed()) {
+    damageStatsWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+    damageStatsWindow.show();
+    damageStatsWindow.focus();
+  }
+}
+
 module.exports = {
-  createWindow,
-  getMainWindow,
   createDamageStatsWindow,
   getDamageStatsWindow,
-  sendToDamageStatsWindow
+  sendToDamageStatsWindow,
+  ensureOnTop
 }; 
